@@ -1,0 +1,26 @@
+	INSTALL OPENCV
+	open powershell
+git clone https://github.com/microsoft/vcpkg.git 
+cd .\vcpkg\                                                                                 
+.\bootstrap-vcpkg.bat
+.\vcpkg install opencv4:x64-windows  
+.\vcpkg integrate install 
+	
+	in visual studio, make sure you're in x64
+	Project > PROJECT Properties
+	C/C++ > Additional include directories & Additional #using directories >
+	C:\Users\XXX\vcpkg\packages\opencv4_x64-windows\include\
+	you can then include it in ur project
+#include <opencv2/opencv.hpp>	
+
+	INSTALL ONNX RUNTIME (for pose detection). 
+	In NuGet, install Mincrosoft.ML.OnnxRuntime
+	Then in Project Properties again, 
+	C/C++ > Language > Change C++ Language Standard to at least C++ 17
+	you can then include it in ur project 
+#include <onnxruntime_cxx_api.h>
+	
+	DOWNLOAD MODELS
+	basic yolov8: https://huggingface.co/Xenova/yolov8-pose-onnx/blob/main/yolov8n-pose.onnx
+	hand-based yolov8: https://huggingface.co/poptoz/yolo26-hand-pose-face-detection/blob/main/models/yolo26_hand_pose_fp16.onnx
+	place .onnx files in created ./models folder
