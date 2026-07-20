@@ -143,6 +143,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalUsingDirectories>C:\Users\michelle\vcpkg\packages\opencv4_x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalUsingDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Users\michelle\vcpkg\packages\opencv4_x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,17 +157,21 @@
   <ItemGroup>
     <ClCompile Include="CameraHandle.cpp" />
     <ClCompile Include="FaceIt.cpp" />
-    <ClCompile Include="GestureDetector.cpp" />
-    <ClCompile Include="HandDetector.cpp" />
+    <ClCompile Include="BodyAnalyser.cpp" />
+    <ClCompile Include="HandAnalyser.cpp" />
+    <ClCompile Include="InputController.cpp" />
     <ClCompile Include="KeypointDetector.cpp" />
+    <ClCompile Include="PoseState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CameraHandle.h" />
-    <ClInclude Include="GestureDetector.h" />
+    <ClInclude Include="BodyAnalyser.h" />
     <ClInclude Include="Hand.h" />
-    <ClInclude Include="HandDetector.h" />
+    <ClInclude Include="HandAnalyser.h" />
+    <ClInclude Include="InputController.h" />
     <ClInclude Include="Keypoint.h" />
     <ClInclude Include="KeypointDetector.h" />
+    <ClInclude Include="PoseState.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="models\yolov8n-pose.onnx" />

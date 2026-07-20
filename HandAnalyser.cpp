@@ -1,16 +1,16 @@
-#include "HandDetector.h"
+#include "HandAnalyser.h"
 
-HandDetector::HandDetector()
+HandAnalyser::HandAnalyser()
 {
 }
 
-bool HandDetector::initialize()
+bool HandAnalyser::initialize()
 {
     initialized = true;
     return true;
 }
 
-std::vector<Hand> HandDetector::detect(const cv::Mat& frame)
+std::vector<Hand> HandAnalyser::detect(const cv::Mat& frame)
 {
     std::vector<Hand> hands;
 

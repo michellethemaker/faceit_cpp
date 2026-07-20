@@ -24,10 +24,16 @@
     <ClCompile Include="KeypointDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GestureDetector.cpp">
+    <ClCompile Include="BodyAnalyser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HandDetector.cpp">
+    <ClCompile Include="HandAnalyser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PoseState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,13 +47,19 @@
     <ClInclude Include="Keypoint.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="GestureDetector.h">
+    <ClInclude Include="BodyAnalyser.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="HandDetector.h">
+    <ClInclude Include="HandAnalyser.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Hand.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PoseState.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputController.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

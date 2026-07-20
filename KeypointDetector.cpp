@@ -1,6 +1,6 @@
 #include "KeypointDetector.h"
 #include <iostream>
-#define _DEBUG
+#define NDEBUG
 
 
 static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& info)
@@ -81,7 +81,7 @@ std::vector<AllKeypoints> KeypointDetector::postprocess(const std::vector<float>
     const int numKeypoints = 17;
     const int numAttributes = 56; // 4 box + 1 score + 51 kps
     const int numCandidates = 8400;
-    const float confThresh = 0.75f; //only keep valid pts
+    const float confThresh = 0.65f; //only keep valid pts
 
     if (output.size() < static_cast<size_t>(numAttributes * numCandidates)) //if o/p too smol.
         return keypoints;
@@ -170,7 +170,7 @@ std::vector<AllKeypoints> KeypointDetector::detect(const cv::Mat& frame)
 
     auto outInfo = outTensor.GetTensorTypeAndShapeInfo();
 
-#ifdef _DEBUG
+#ifdef DEBUG
     auto outShape = outInfo.GetShape(); // Get actual shape.
 
     std::cout << "Output shape = [";
@@ -186,7 +186,7 @@ std::vector<AllKeypoints> KeypointDetector::detect(const cv::Mat& frame)
 
     const float* outData = outTensor.GetTensorData<float>(); //raw ptr to tensor contents
 
-#ifdef _DEBUG
+#ifdef DEBUG
     size_t n = std::min<size_t>(20, outInfo.GetElementCount()); // Only print a few.
 
     std::cout << "First output values: ";
