@@ -24,16 +24,25 @@
     <ClCompile Include="KeypointDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BodyAnalyser.cpp">
+    <ClCompile Include="AnalyserBody.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HandAnalyser.cpp">
+    <ClCompile Include="AnalyserHand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PoseState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="InputController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AnalyserHead.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonMath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Calibration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,10 +56,10 @@
     <ClInclude Include="Keypoint.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="BodyAnalyser.h">
+    <ClInclude Include="AnalyserBody.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="HandAnalyser.h">
+    <ClInclude Include="AnalyserHand.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Hand.h">
@@ -62,6 +71,15 @@
     <ClInclude Include="InputController.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="AnalyserHead.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonMath.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Calibration.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -70,5 +88,8 @@
     </None>
     <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\onnxruntime.dll" />
     <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\onnxruntime_providers_shared.dll" />
+    <None Include="calibration.json">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

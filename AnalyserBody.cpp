@@ -1,9 +1,9 @@
-#include "BodyAnalyser.h"
+#include "AnalyserBody.h"
 #include <cmath>
 
-BodyState BodyAnalyser::analyseBody(const AllKeypoints& keypoint)
+PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 {
-    BodyState bodystate;
+    PSBodyState bodystate;
     if (keypoint.keypoints.size() < 17)
         return bodystate;
 

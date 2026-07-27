@@ -155,25 +155,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnalyserHead.cpp" />
+    <ClCompile Include="Calibration.cpp" />
     <ClCompile Include="CameraHandle.cpp" />
+    <ClCompile Include="CommonMath.cpp" />
     <ClCompile Include="FaceIt.cpp" />
-    <ClCompile Include="BodyAnalyser.cpp" />
-    <ClCompile Include="HandAnalyser.cpp" />
+    <ClCompile Include="AnalyserBody.cpp" />
+    <ClCompile Include="AnalyserHand.cpp" />
     <ClCompile Include="InputController.cpp" />
     <ClCompile Include="KeypointDetector.cpp" />
     <ClCompile Include="PoseState.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnalyserHead.h" />
+    <ClInclude Include="Calibration.h" />
     <ClInclude Include="CameraHandle.h" />
-    <ClInclude Include="BodyAnalyser.h" />
+    <ClInclude Include="AnalyserBody.h" />
+    <ClInclude Include="CommonMath.h" />
     <ClInclude Include="Hand.h" />
-    <ClInclude Include="HandAnalyser.h" />
+    <ClInclude Include="AnalyserHand.h" />
     <ClInclude Include="InputController.h" />
     <ClInclude Include="Keypoint.h" />
     <ClInclude Include="KeypointDetector.h" />
     <ClInclude Include="PoseState.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="calibration.json" />
     <None Include="models\yolov8n-pose.onnx" />
     <None Include="packages.config" />
   </ItemGroup>

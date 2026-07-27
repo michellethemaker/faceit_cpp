@@ -2,10 +2,10 @@
 #include <iostream>
 
 	
-void InputController::update(const PoseState& state)
+void InputController::update(const PSPoseState& state)
 {
-	if (state.bodystate.headLeft)
-	{
-		std::cout << "LEFT CLICK\n";  //sample output for now
-	}
+	//if (state.bodystate.headLeft)
+	//{
+	//	std::cout << "LEFT CLICK\n";  //sample output for now
+	//}
 }

@@ -4,10 +4,10 @@
 #include <opencv2/opencv.hpp>
 #include "Hand.h"
 
-class HandAnalyser
+class AnalyserHand
 {
 public:
-    HandAnalyser();
+    AnalyserHand();
     bool initialize();
     std::vector<Hand> detect(const cv::Mat& frame);
 

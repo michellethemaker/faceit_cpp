@@ -4,5 +4,5 @@
 class InputController
 {
 public:
-    void update(const PoseState & state);
+    void update(const PSPoseState & state);
 };
