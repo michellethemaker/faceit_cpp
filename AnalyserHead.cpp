@@ -42,7 +42,7 @@ PSCalibrateHeadState AnalyserHead::calibrateHead(const AllKeypoints& keypoint, c
         
         //calculate other relevant points here
         break;
-    case 27:
+    case 'p':
         std::cout << "CALIB DONE\n";
         return g_calibHeadState;
     };
@@ -91,7 +91,7 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     float pitchDownMax = g_calibHeadState.noseDownY;
     std::cout << pitchUpMax<<"||"<<pitchDownMax << "\n";
     float pitchRaw = nose.y;
-    float y = (pitchRaw - pitchDownMax) / (pitchUpMax - pitchDownMax);
+    float y = (pitchRaw - pitchUpMax) / (pitchDownMax - pitchUpMax);
     headstate.headYcoord = std::clamp(y, 0.0f, 1.0f);
     //if (reye.y > lear.y || leye.y > lear.y)
     //{

@@ -9,6 +9,4 @@ class AnalyserHead
 public:
     PSCalibrateHeadState calibrateHead(const AllKeypoints& keypoint, char c);
     PSHeadState analyseHead(const AllKeypoints& keypoint); // use posestate
-  
-
 };

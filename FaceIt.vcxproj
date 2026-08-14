@@ -156,7 +156,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnalyserHead.cpp" />
-    <ClCompile Include="Calibration.cpp" />
     <ClCompile Include="CameraHandle.cpp" />
     <ClCompile Include="CommonMath.cpp" />
     <ClCompile Include="FaceIt.cpp" />
@@ -168,7 +167,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnalyserHead.h" />
-    <ClInclude Include="Calibration.h" />
     <ClInclude Include="CameraHandle.h" />
     <ClInclude Include="AnalyserBody.h" />
     <ClInclude Include="CommonMath.h" />
@@ -180,7 +178,6 @@
     <ClInclude Include="PoseState.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="calibration.json" />
     <None Include="models\yolov8n-pose.onnx" />
     <None Include="packages.config" />
   </ItemGroup>

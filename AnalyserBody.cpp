@@ -5,8 +5,13 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 {
     PSBodyState bodystate;
     if (keypoint.keypoints.size() < 17)
+    {
+        bodystate.isVisible = false;
         return bodystate;
-
+    }
+        
+    else
+        bodystate.isVisible = true;
     const auto& ls = keypoint.keypoints[LEFT_SHOULDER];
     const auto& rs = keypoint.keypoints[RIGHT_SHOULDER];
     const auto& lw = keypoint.keypoints[LEFT_WRIST];

@@ -6,7 +6,6 @@
 #include <iostream>
 #include "CameraHandle.h"
 #include "KeypointDetector.h"
-//#include "Calibration.h"
 #include "AnalyserBody.h"
 #include "AnalyserHand.h"
 #include "AnalyserHead.h"
@@ -21,7 +20,6 @@ int main()
     Camera camera;
     KeypointDetector keypointdetector;
     PSPoseState posestate;
-    //Calibration calibration;
     AnalyserHand analyserhand;
     AnalyserBody analyserbody;
     AnalyserHead analyserhead;
@@ -44,7 +42,8 @@ int main()
     else
         std::cout << "CAMERA LOADED\n";
 
-    cv::Mat frame, flippedframe;
+    cv::Mat frame, smoothedframe, flippedframe;
+    double alpha = 0.4;
 
     //calibration loop
     while (true)
@@ -86,7 +85,7 @@ int main()
         cv::flip(frame, flippedframe, 1); // FLIP FRAME BEFORE PRINTING WORDS. THIS WILL B REDUNDANT ONCE REPLACED 
 
         cv::imshow("Camera", flippedframe);
-        if (cv::waitKey(1) == 27)
+        if (cv::waitKey(1) == 'p')
         {
             std::cout << "CALIBRATION DONE, PLEASE WAIT, RUNNING LOOP STARTING UP\n";
             break;
@@ -95,8 +94,6 @@ int main()
         
     }
     
-
-
     std::cout << "RUNNING LOOP STARTED\n";
 
     //actual running loop
