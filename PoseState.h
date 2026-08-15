@@ -36,7 +36,7 @@ struct PSBodyState
 	bool rightArmUp = false;
 	bool headLeft = false;
 	bool headRight = false;
-
+	bool toot = false;
 };
 
 struct PSHandState

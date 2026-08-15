@@ -2,8 +2,8 @@
 #include <iostream>
 #define NDEBUG
 
-
-static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& info)
+// resize, pad inpt img so it matches model's expected ip size (KEEPS ASPECT RATIO SAME)
+static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& info) 
 {
     float r = std::min((float)newShape.width / src.cols, (float)newShape.height / src.rows);
 
@@ -29,7 +29,7 @@ static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& i
 }
 
 
-KeypointDetector::KeypointDetector()
+KeypointDetector::KeypointDetector() //create onnx runtime env, set optimisation settings here
 	: env(ORT_LOGGING_LEVEL_WARNING, "KeypointDetector") 
 {
 	sessionOptions.SetGraphOptimizationLevel(
@@ -52,6 +52,7 @@ bool KeypointDetector::loadModel(const std::wstring& modelPath)
 
 }
 
+//convert opencv's Mat to vector type for onnx model to read
 std::vector<float> KeypointDetector::preprocess(const cv::Mat& frame)
 {
     LetterboxInfo info{};
@@ -74,6 +75,7 @@ std::vector<float> KeypointDetector::preprocess(const cv::Mat& frame)
     return inputTensorValues;
 }
 
+//convert model output to actual keypoints (in original image coords!)
 std::vector<AllKeypoints> KeypointDetector::postprocess(const std::vector<float>& output, const cv::Size& originalSize)
 {
     std::vector<AllKeypoints> keypoints;

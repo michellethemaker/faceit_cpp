@@ -1,7 +1,7 @@
 #include "CameraHandle.h"
 
 Camera::Camera(int index)
-    : camera(index) // initialise camera immediately w/o using a dummy variable. better.
+    : camera(index, cv::CAP_DSHOW) // initialise camera immediately w/o using a dummy variable. better. 
 {
 }
 

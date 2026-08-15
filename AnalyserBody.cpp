@@ -1,5 +1,6 @@
 #include "AnalyserBody.h"
 #include <cmath>
+#include <iostream>
 
 PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 {
@@ -25,6 +26,8 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
     bodystate.headLeft = nose.confidence > 0.5f && nose.x > shoulderMidX + 20.0f;
     bodystate.headRight = nose.confidence > 0.5f && nose.x < shoulderMidX - 20.0f;
 
+    bodystate.toot = rs.confidence > 0.5f && rw.confidence > 0.5f && std::abs(rs.x - rw.x)>100.0f ;
+    //std::cout << "TOOT: " << bodystate.toot <<"\n";
     /*if (leftArmUp && rightArmUp) return "both arms up";
     if (leftArmUp) return "left arm up";
     if (rightArmUp) return "right arm up";
