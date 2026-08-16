@@ -11,6 +11,7 @@
 #include "AnalyserHead.h"
 #include "PoseState.h"
 #include "InputController.h"
+#include <chrono>
 
 //TODO: more gestures,gesture smoothing, wrist detection (to pass to hand detection)
 int main()
@@ -25,6 +26,8 @@ int main()
     AnalyserHead analyserhead;
     InputController inputcontroller;
     char f;
+    double fps = 0.0;
+    double fpsSmoothed = 0.0;
 
     if (!keypointdetector.loadModel(L"models\\yolov8n-pose.onnx"))
     {
@@ -48,6 +51,7 @@ int main()
     //calibration loop
     while (true)
     {
+        auto timeStart = std::chrono::high_resolution_clock::now(); //timer for fps reading!
         if (!camera.getFrame(frame))
         {
             std::cout << "CAN'T GET FRAME\n";
@@ -90,7 +94,23 @@ int main()
             std::cout << "CALIBRATION DONE, PLEASE WAIT, RUNNING LOOP STARTING UP\n";
             break;
         }
-            
+        auto timeEnd = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = timeEnd - timeStart;
+        double timeFrame = elapsed.count();
+
+        if (timeFrame > 0.0) {
+            fps = 1.0 / timeFrame;
+
+            if (fpsSmoothed == 0.0) //first frame only
+            {
+                fpsSmoothed = fps;
+            }
+            else //TODO: this is a quick LPF. might strain system though, also consider moving to commonMath.cpp
+            {
+                fpsSmoothed = (alpha * fps) + ((1.0 - alpha) * fpsSmoothed);
+            }
+        }
+        std::cout << fpsSmoothed << "\n";
         
     }
     
