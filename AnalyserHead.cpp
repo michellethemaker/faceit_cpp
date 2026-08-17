@@ -60,73 +60,61 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     const auto& lear = keypoint.keypoints[LEFT_EAR];
     const auto& rear = keypoint.keypoints[RIGHT_EAR];
     const auto& nose = keypoint.keypoints[NOSE];
-
-    //bodystate.leftArmUp = ls.confidence > 0.5f && lw.confidence > 0.5f && lw.y < ls.y;
-    //bodystate.rightArmUp = rs.confidence > 0.5f && rw.confidence > 0.5f && rw.y < rs.y;
-
     
-    /*if (leye.x < nose.x)
+    double leftvsrightdist = commonmath.EuclDist(lear, nose) - commonmath.EuclDist(rear, nose);
+    double eyedist = commonmath.EuclDist(leye, reye);
+    double leftvsrightdist_normalised = leftvsrightdist / eyedist;
+    double pitch = commonmath.SignedAngle(lear, nose, rear);
+
+    if (leftvsrightdist_normalised < 0 && leftvsrightdist_normalised < -0.98)
     {
-        std::cout << "nose left peak \n";
-        headstate.headXcoord = 1.0;
+        //std::cout << "<<<<<<<<<<<\n";
+        headstate.headXleft = true;
+        headstate.headXright = false;
     }
-    else if (reye.x > nose.x)
+    if (leftvsrightdist_normalised > 0 && leftvsrightdist_normalised > 0.98)
     {
-        std::cout << "nose right peak \n";
-        headstate.headXcoord = 0.0;
+        //std::cout << "           >>>>>>>>>>>>\n";
+        headstate.headXleft = false;
+        headstate.headXright = true;
     }
-    else
-    headstate.headXcoord = (nose.x - leye.x) /(reye.x - leye.x) ;*/
-    //x coords
-    float yawLeftMax = g_calibHeadState.noseLeftX;
-    float yawRightMax = g_calibHeadState.noseRightX;
-    std::cout <<                            yawLeftMax << "||" << yawRightMax << "\n";
-    float yawRaw = nose.x;
-    float x = (yawRaw - yawLeftMax) / (yawRightMax - yawLeftMax);
-    headstate.headXcoord = std::clamp(x, 0.0f, 1.0f);
+    
+    
+    if (pitch> 1 && pitch <2.9)
+    {
+        //std::cout << "\n^^^^^^^^UP\n";
+        headstate.headYup = true;
+        headstate.headYdown = false;
+    }
+    if (pitch<-1 && pitch > -2.9)
+    {
+        //std::cout << "\n______DOWN\n";
+        headstate.headYup = false;
+        headstate.headYdown = true;
+    }
+
+    //std::cout <<"ANGLE: " << pitch << "\n";
 
 
-    //y coords
-    float pitchUpMax = g_calibHeadState.noseUpY;
-    float pitchDownMax = g_calibHeadState.noseDownY;
-    std::cout << pitchUpMax<<"||"<<pitchDownMax << "\n";
-    float pitchRaw = nose.y;
-    float y = (pitchRaw - pitchUpMax) / (pitchDownMax - pitchUpMax);
-    headstate.headYcoord = std::clamp(y, 0.0f, 1.0f);
-    //if (reye.y > lear.y || leye.y > lear.y)
-    //{
-    //    std::cout << "BOTTOM MAXED\n";
-    //    headstate.headYcoord = 1.0;
-    //}
-    //else if (nose.y < leye.y || nose.y < reye.y)
-    //{
-    //    std::cout << "TOP MAXED\n";
-    //    headstate.headYcoord = 0.0;
-    //}
-    //else
-    //{
-    //    float eyeAvgY = (leye.y + reye.y) * 0.5f;
-    //    float noseEyeY = nose.y - eyeAvgY;
-    //    float eyeDist = commonmath.EuclDist(
-    //        leye.x, reye.x,
-    //        leye.y, reye.y
-    //    );
-    //    float pitch = noseEyeY / eyeDist; //norm by face scale
-    //    float lr_ratio = commonmath.EuclDist(
-    //        leye.x, nose.x, 
-    //        leye.y, nose.y) / 
-    //        (commonmath.EuclDist(
-    //        reye.x, nose.x, 
-    //        reye.y, nose.y));
-    //    float yawCorrection = (lr_ratio + 1.0f / lr_ratio) * 0.5f; // turn lr_ratio symmetrical across origin
-    //    pitch /= yawCorrection;
 
-    //    
-    //    headstate.headYcoord = pitch;
-    //}
-    //headstate.headYcoord = reye.y;
-    headstate.tempX = nose.x;
-    headstate.tempY = nose.y;
+
+    ////x coords
+    //float yawLeftMax = g_calibHeadState.noseLeftX;
+    //float yawRightMax = g_calibHeadState.noseRightX;
+    //std::cout <<                            yawLeftMax << "||" << yawRightMax << "\n";
+    //float yawRaw = nose.x;
+    //float x = (yawRaw - yawLeftMax) / (yawRightMax - yawLeftMax);
+    //headstate.headXcoord = std::clamp(x, 0.0f, 1.0f);
+
+
+    ////y coords
+    //float pitchUpMax = g_calibHeadState.noseUpY;
+    //float pitchDownMax = g_calibHeadState.noseDownY;
+    //std::cout << pitchUpMax<<"||"<<pitchDownMax << "\n";
+    //float pitchRaw = nose.y;
+    //float y = (pitchRaw - pitchUpMax) / (pitchDownMax - pitchUpMax);
+    //headstate.headYcoord = std::clamp(y, 0.0f, 1.0f);
+   
     return headstate;
 }
 

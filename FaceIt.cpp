@@ -94,6 +94,7 @@ int main()
             std::cout << "CALIBRATION DONE, PLEASE WAIT, RUNNING LOOP STARTING UP\n";
             break;
         }
+            
         auto timeEnd = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = timeEnd - timeStart;
         double timeFrame = elapsed.count();
@@ -111,7 +112,7 @@ int main()
             }
         }
         std::cout << fpsSmoothed << "\n";
-        
+
     }
     
     std::cout << "RUNNING LOOP STARTED\n";

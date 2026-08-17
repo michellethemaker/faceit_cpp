@@ -9,6 +9,10 @@ struct PSHeadState
 	float headYcoord = 0.0f;
 	float noseXcoord = 0.0f;
 	float noseYcoord = 0.0f;
+	bool headXleft = false;
+	bool headXright = false;
+	bool headYup = false;
+	bool headYdown = false;
 	float tempX = 0.0f;
 	float tempY = 0.0f;
 	float yaw = 0.0f;
@@ -37,6 +41,8 @@ struct PSBodyState
 	bool headLeft = false;
 	bool headRight = false;
 	bool toot = false;
+	bool leftLegUp = false;
+	bool rightLegUp = false;
 };
 
 struct PSHandState
