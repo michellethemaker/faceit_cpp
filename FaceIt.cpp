@@ -37,6 +37,8 @@ int main()
     else
         std::cout << "MODEL LOADED\n";
         
+    keypointdetector.start(); //start worker trhread
+
     if (!camera.isOpened())
     {
         std::cout << "Couldn't open camera\n";
@@ -57,19 +59,24 @@ int main()
             std::cout << "CAN'T GET FRAME\n";
             break;
         }
-        auto poses = keypointdetector.detect(frame);
+        keypointdetector.pushFrame(frame); //send frame to worker
+        //auto poses = keypointdetector.detect(frame);
 
-        if (!poses.empty())
+        AllKeypoints pose;
+        bool havePose = keypointdetector.getLatestPose(pose); //then get latest pose
+  
+
+        if (havePose)
         {
-            auto best = std::max_element(
-                poses.begin(), poses.end(),
-                [](const AllKeypoints& a, const AllKeypoints& b)
-                {
-                    return a.score < b.score;
-                });
+            //auto best = std::max_element(
+            //    poses.begin(), poses.end(),
+            //    [](const AllKeypoints& a, const AllKeypoints& b)
+            //    {
+            //        return a.score < b.score;
+            //    });
 
-            const AllKeypoints& pose = *best;
-
+            //const AllKeypoints& pose = *best;
+            // ^^ commented out this part; alrdy settled in keypointdetector while adding worker thread stuff
             for (const auto& kp : pose.keypoints)
             {
                 if (kp.confidence > 0.5f)
@@ -124,19 +131,22 @@ int main()
         if (!camera.getFrame(frame))
             break;
         
-        auto poses = keypointdetector.detect(frame);
+        keypointdetector.pushFrame(frame);
+        /*auto poses = keypointdetector.detect(frame);*/
+        AllKeypoints pose;
+        bool havePose = keypointdetector.getLatestPose(pose);
 
-        if (!poses.empty())
+        if (havePose)
         {
-            auto best = std::max_element(
+            /*auto best = std::max_element(
                 poses.begin(), poses.end(),
                 [](const AllKeypoints& a, const AllKeypoints& b)
                 {
                     return a.score < b.score;
                 });
 
-            const AllKeypoints& pose = *best;
-
+            const AllKeypoints& pose = *best;*/
+            // ^^ commented out this part; alrdy settled in keypointdetector while adding worker thread stuff
             for (const auto& kp : pose.keypoints)
             {
                 if (kp.confidence > 0.5f)
@@ -211,5 +221,6 @@ int main()
         if (cv::waitKey(1) == 27)
             break;
     }
+    keypointdetector.stop(); //stop worker thread
     return 0;
 }

@@ -28,12 +28,57 @@ static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& i
     return out;
 }
 
+void KeypointDetector::start() //start worker thread
+{
+    if (running) return;
+    running = true;
+    workerThread = std::thread(&KeypointDetector::workerLoop, this);
+}
+
+void KeypointDetector::stop() //stop worker thread
+{
+    if (!running) return;
+    running = false;
+
+    // this is to wake up worker if it's sleeping/waiting for a frame
+    {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        hasPendingFrame = true;
+    }
+
+    if (workerThread.joinable())
+    {
+        workerThread.join();
+    }
+}
 
 KeypointDetector::KeypointDetector() //create onnx runtime env, set optimisation settings here
 	: env(ORT_LOGGING_LEVEL_WARNING, "KeypointDetector") 
 {
 	sessionOptions.SetGraphOptimizationLevel(
 		GraphOptimizationLevel::ORT_ENABLE_ALL);
+}
+KeypointDetector::~KeypointDetector() // destructor
+{
+    stop(); // make sure worker thread joined! (stop() defined above)
+}
+
+void KeypointDetector::pushFrame(const cv::Mat& frame)// main thread writes to pendingFrame
+{
+    {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        frame.copyTo(pendingFrame);
+        hasPendingFrame = true;
+    }
+}
+
+bool KeypointDetector::getLatestPose(AllKeypoints& out)// main thread reads latestPose
+{
+    std::lock_guard<std::mutex> lock(poseMutex);
+    if (!hasLatestPose)
+        return false;
+    out = latestPose;
+    return true;
 }
 
 bool KeypointDetector::loadModel(const std::wstring& modelPath)
@@ -201,4 +246,51 @@ std::vector<AllKeypoints> KeypointDetector::detect(const cv::Mat& frame)
     std::vector<float> output(outData, outData + outCount); //copy op to normal vector
     return postprocess(output, frame.size()); //convt raw op to poses
 
+}
+
+void KeypointDetector::workerLoop()
+{
+    while (running)
+    {
+        cv::Mat workFrame;
+        bool haveFrame = false;
+
+        // grab pending frame (ifany)
+        std::lock_guard<std::mutex> lock(frameMutex);
+        if (hasPendingFrame)
+        {
+            workFrame = pendingFrame.clone();
+            hasPendingFrame = false;
+            haveFrame = true;
+        }
+
+        if (!haveFrame)//smol sleep, avoid busyspinninh
+        {
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1)); //tried the sleep, too jittery. keep in case.
+            continue;
+        }
+
+        auto poses = detect(workFrame); // BOOM just run this in this here worker thread
+       
+        AllKeypoints bestPose;
+        bool hasPose = false;
+
+        if (!poses.empty())
+        {
+            auto best = std::max_element(
+                poses.begin(), poses.end(),
+                [](const AllKeypoints& a, const AllKeypoints& b)
+                {
+                    return a.score < b.score;
+                });
+            bestPose = *best;
+            hasPose = true;
+        }
+        
+        {
+            std::lock_guard<std::mutex> lock(poseMutex);//publish result for main thread
+            latestPose = bestPose;
+            hasLatestPose = hasPose;
+        }
+    }
 }

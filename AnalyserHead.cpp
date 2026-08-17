@@ -66,13 +66,13 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     double leftvsrightdist_normalised = leftvsrightdist / eyedist;
     double pitch = commonmath.SignedAngle(lear, nose, rear);
 
-    if (leftvsrightdist_normalised < 0 && leftvsrightdist_normalised < -0.98)
+    if (leftvsrightdist_normalised < 0 && leftvsrightdist_normalised < -0.95)
     {
         //std::cout << "<<<<<<<<<<<\n";
         headstate.headXleft = true;
         headstate.headXright = false;
     }
-    if (leftvsrightdist_normalised > 0 && leftvsrightdist_normalised > 0.98)
+    if (leftvsrightdist_normalised > 0 && leftvsrightdist_normalised > 0.95)
     {
         //std::cout << "           >>>>>>>>>>>>\n";
         headstate.headXleft = false;
