@@ -1,7 +1,9 @@
 #include "AnalyserBody.h"
 #include <cmath>
+#include "CommonMath.h"
 #include <iostream>
 
+CommonMath cmath;
 PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 {
     PSBodyState bodystate;
@@ -34,8 +36,12 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 
     bodystate.toot = rs.confidence > 0.5f && rw.confidence > 0.5f && std::abs(rs.x - rw.x)>100.0f ;
 
-    bodystate.leftLegUp = (ra.y - la.y)/(lh.x-rh.x) > 0.3;
-    bodystate.rightLegUp = (la.y - ra.y) / (lh.x - rh.x) > 0.3;
+    bodystate.leftLegUp = (ra.y - la.y)/(lh.x-rh.x) > 0.28;
+    bodystate.rightLegUp = (la.y - ra.y) / (lh.x - rh.x) > 0.28;
+
+    bodystate.left = cmath.Angle(ls, lh, rh)> 1.8;
+    bodystate.right = cmath.Angle(rs, rh, lh) > 1.8;
+    //std::cout << bodystate.left<< "||"<< bodystate.right << "\n";
     //if (bodystate.leftLegUp) std::cout << "<<<<<<<LEFT\n";
     //if (bodystate.rightLegUp) std::cout << "RIGHT>>>>>>>>\n";
 

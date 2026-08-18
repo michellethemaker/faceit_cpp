@@ -93,14 +93,7 @@ int main()
             }
          
         }
-        cv::flip(frame, flippedframe, 1); // FLIP FRAME BEFORE PRINTING WORDS. THIS WILL B REDUNDANT ONCE REPLACED 
-
-        cv::imshow("Camera", flippedframe);
-        if (cv::waitKey(1) == 'p')
-        {
-            std::cout << "CALIBRATION DONE, PLEASE WAIT, RUNNING LOOP STARTING UP\n";
-            break;
-        }
+        
             
         auto timeEnd = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = timeEnd - timeStart;
@@ -118,8 +111,24 @@ int main()
                 fpsSmoothed = (alpha * fps) + ((1.0 - alpha) * fpsSmoothed);
             }
         }
-        std::cout << fpsSmoothed << "\n";
+        
+        cv::flip(frame, flippedframe, 1); // FLIP FRAME BEFORE PRINTING WORDS. THIS WILL B REDUNDANT ONCE REPLACED 
+        //std::cout << fpsSmoothed << "\n";
 
+        cv::putText(flippedframe,
+            std::to_string(fpsSmoothed),
+            cv::Point(10, 70),
+            cv::FONT_HERSHEY_SIMPLEX,
+            1,
+            cv::Scalar(0, 255, 255),
+            2);
+
+        cv::imshow("Camera", flippedframe);
+        if (cv::waitKey(1) == 'p')
+        {
+            std::cout << "CALIBRATION DONE, PLEASE WAIT, RUNNING LOOP STARTING UP\n";
+            break;
+        }
     }
     
     std::cout << "RUNNING LOOP STARTED\n";
