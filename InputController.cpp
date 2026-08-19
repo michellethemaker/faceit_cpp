@@ -74,21 +74,26 @@ void InputController::update(const PSPoseState& state)
 
 
 	//===================HEAD MOVEMENT (POV CONTROL)=====================
+	//scaled acc to how much u turn ur head. need to handle the scale, make sure up/down scale = left/right scale.
 	if (state.ps_headstate.headYup)
 	{
-		MoveRelative(0, -10);
+		//std::cout << state.ps_headstate.headYup_val<<"\n";
+		MoveRelative(0, -10*(state.ps_headstate.headYup_val));//TODO: fix these, normalise somehow.
 	}
 	else if (state.ps_headstate.headYdown)
 	{
-		MoveRelative(0, 10);
+		//std::cout << state.ps_headstate.headYdown_val << "\n";
+		MoveRelative(0, 10* (-1) * (state.ps_headstate.headYdown_val));//TODO: fix these, normalise somehow.
 	}
 	if (state.ps_headstate.headXleft)
 	{
-		MoveRelative(-10, 0);
+		//std::cout << state.ps_headstate.headXleft_val << "\n";
+		MoveRelative(-10*(-1)*(state.ps_headstate.headXleft_val), 0); 
 	}
 	else if (state.ps_headstate.headXright)
 	{
-		MoveRelative(10, 0);
+		//std::cout << state.ps_headstate.headXright_val << "\n";
+		MoveRelative(10*(state.ps_headstate.headXright_val), 0);
 	}
 
 	//===================LEFT/RIGHT TRIGGER(A, D CONTROL)=====================
@@ -156,29 +161,6 @@ void InputController::update(const PSPoseState& state)
 	}
 	leftPrev = state.ps_bodystate.leftLegUp; //update prev bools
 	rightPrev = state.ps_bodystate.rightLegUp;
-	//std::cout << walkTimerCurr << "||" << leftPrev << "||" << rightPrev << ")(" << leftStep << "||" << rightStep << "\n";
-	//if (state.ps_headstate.headXcoord) // TODO: check if this actually checks presence of head. what returns when no head present?
-	//{
 
-	//	currX = state.ps_headstate.headXcoord * screenWidth;
-	//	currY = state.ps_headstate.headYcoord * screenHeight;
-	//	if (std::abs(currX - prevX) < deadzone_S)
-	//	{
-	//		currX = prevX;
-	//	}
-	//	else
-	//		prevX = currX;
-	//	
-	//	if (std::abs(currY - prevY) < deadzone_S)
-	//	{
-	//		currY = prevY;
-	//	}
-	//	else
-	//		prevY = currY;
-
-
-	//	SetCursorPos(currX, currY);
-	//	//std::cout << "====\nmousepos: \n" << currX << "||" << currY << "\n" << prevX << "||" << prevY << "\n=====\n";
-	//}
 
 }

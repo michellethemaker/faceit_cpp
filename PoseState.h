@@ -13,6 +13,10 @@ struct PSHeadState
 	bool headXright = false;
 	bool headYup = false;
 	bool headYdown = false;
+	float headXleft_val = 0.0f;
+	float headXright_val = 0.0f;
+	float headYup_val = 0.0f;
+	float headYdown_val = 0.0f;
 	float tempX = 0.0f;
 	float tempY = 0.0f;
 	float yaw = 0.0f;
