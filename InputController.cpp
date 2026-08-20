@@ -146,7 +146,7 @@ void InputController::update(const PSPoseState& state)
 	
 	if (walkTimerCurr > 0)
 	{
-		std::cout << walkTimerCurr<<"STEPPY\n";
+		//std::cout << walkTimerCurr<<"STEPPY\n";
 		if (walkTimerCurr == 15)
 		{
 			KeyDown('W');

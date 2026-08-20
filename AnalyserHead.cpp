@@ -65,6 +65,7 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     double eyedist = commonmath.EuclDist(leye, reye);
     double leftvsrightdist_normalised = leftvsrightdist / eyedist;
     double pitch = commonmath.SignedAngle(lear, nose, rear);
+    double pitch_normalised = (pitch / 6.28);
 
     if (leftvsrightdist_normalised < 0 && leftvsrightdist_normalised < -0.9)
     {
@@ -81,11 +82,11 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
         headstate.headXright = true;
     }
     
-    
-    if (pitch> 1 && pitch <2.8)
+    //std::cout << pitch_normalised <<"||"<< pitch << "\n";
+    if (pitch> 1 && pitch <3)
     {
         //std::cout << "\n^^^^^^^^UP\n";
-        headstate.headYup_val = pitch;
+        headstate.headYup_val = 1/ pitch_normalised;
         headstate.headYup = true;
         headstate.headYdown = false;
         
@@ -93,7 +94,7 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     if (pitch<-1 && pitch > -2.8)
     {
         //std::cout << "\n______DOWN\n";
-        headstate.headYdown_val = pitch;
+        headstate.headYdown_val = 1/ pitch_normalised;
         headstate.headYup = false;
         headstate.headYdown = true;
 
