@@ -26,8 +26,9 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
     bodystate.headLeft = nose.confidence > 0.5f && nose.x > shoulderMidX + 20.0f;
     bodystate.headRight = nose.confidence > 0.5f && nose.x < shoulderMidX - 20.0f;
 
-    bodystate.toot = rs.confidence > 0.5f && rw.confidence > 0.5f && std::abs(rs.x - rw.x)>100.0f ;
+    bodystate.toot = rs.confidence > 0.5f && rw.confidence > 0.5f && (std::abs(lw.x - rw.x)/std::abs(ls.x - rs.x))>1.0f ;
     //std::cout << "TOOT: " << bodystate.toot <<"\n";
+    //std::cout << std::abs(lw.x - rw.x) / std::abs(ls.x - rs.x) << "\n";
     /*if (leftArmUp && rightArmUp) return "both arms up";
     if (leftArmUp) return "left arm up";
     if (rightArmUp) return "right arm up";
