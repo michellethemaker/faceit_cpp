@@ -42,6 +42,9 @@
     <ClCompile Include="CommonMath.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="KeypointHandDetector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CameraHandle.h">
@@ -72,6 +75,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="CommonMath.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KeypointHandDetector.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KeypointHand.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

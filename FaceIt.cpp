@@ -6,6 +6,7 @@
 #include <iostream>
 #include "CameraHandle.h"
 #include "KeypointDetector.h"
+#include "KeypointHandDetector.h"
 #include "AnalyserBody.h"
 #include "AnalyserHand.h"
 #include "AnalyserHead.h"
@@ -20,8 +21,10 @@ int main()
 
     Camera camera;
     KeypointDetector keypointdetector;
+    KeypointHandDetector lefthanddetector;
+    KeypointHandDetector righthanddetector;
     PSPoseState posestate;
-    AnalyserHand analyserhand;
+    //AnalyserHand analyserhand;
     AnalyserBody analyserbody;
     AnalyserHead analyserhead;
     InputController inputcontroller;
@@ -29,15 +32,35 @@ int main()
     double fps = 0.0;
     double fpsSmoothed = 0.0;
 
+    // Set level to WARNING n suppress INFO logs
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_WARNING);
+
     if (!keypointdetector.loadModel(L"models\\yolov8n-pose.onnx"))
     {
         std::cout << "Model failed to load!";
         return -1;
     }
     else
-        std::cout << "MODEL LOADED\n";
+        std::cout << "BODY MODEL LOADED\n";
         
+    if (!lefthanddetector.loadModel(L"models\\yolo26_hand_pose_fp16.onnx"))
+    {
+        std::cout << "LHandModel failed to load!";
+        return -1;
+    }
+    else
+        std::cout << "LEFT HAND MODEL LOADED\n";
+    if (!righthanddetector.loadModel(L"models\\yolo26_hand_pose_fp16.onnx"))
+    {
+        std::cout << "RHandModel failed to load!";
+        return -1;
+    }
+    else
+        std::cout << "RIGHT HAND MODEL LOADED\n";
+
     keypointdetector.start(); //start worker trhread
+    lefthanddetector.start();
+    righthanddetector.start();
 
     if (!camera.isOpened())
     {
@@ -60,11 +83,12 @@ int main()
             break;
         }
         keypointdetector.pushFrame(frame); //send frame to worker
+        //keypointhanddetector.pushFrame(frame); //send frame to worker
         //auto poses = keypointdetector.detect(frame);
 
         AllKeypoints pose;
+
         bool havePose = keypointdetector.getLatestPose(pose); //then get latest pose
-  
 
         if (havePose)
         {
@@ -85,6 +109,67 @@ int main()
             posestate.ps_bodystate = analyserbody.analyseBody(pose);
             posestate.ps_headstate = analyserhead.analyseHead(pose);
 
+
+            if (posestate.ps_bodystate.hasLeftHandROI)
+            {
+                cv::Rect leftROI = posestate.ps_bodystate.leftHandROI;
+                
+                //clamp
+                leftROI &= cv::Rect(0, 0, frame.cols, frame.rows); 
+                cv::Mat leftCrop;
+                if (leftROI.width > 10 && leftROI.height > 10)
+                    leftCrop = frame(leftROI).clone();
+                
+
+                if (!leftCrop.empty())
+                    lefthanddetector.pushFrame(leftCrop);
+                AllHandKeypoints posehand;
+                if (lefthanddetector.getLatestPose(posehand))
+                {
+                    for (const auto& kp : posehand.keypointshand)
+                    {
+                        if (kp.confidence > 0.5f)
+                        {
+                            cv::Point pt(
+                                static_cast<int>(kp.x + leftROI.x),
+                                static_cast<int>(kp.y + leftROI.y)
+                            );
+                            cv::circle(frame, pt, 4, cv::Scalar(115, 15, 0), -1);
+                        }
+                    }
+                }
+
+            }
+
+            if (posestate.ps_bodystate.hasRightHandROI)
+            {
+                cv::Rect rightROI = posestate.ps_bodystate.rightHandROI;
+
+                //clamp
+                rightROI &= cv::Rect(0, 0, frame.cols, frame.rows);
+                cv::Mat rightCrop;
+                if (rightROI.width > 10 && rightROI.height > 10)
+                    rightCrop = frame(rightROI).clone();
+
+
+                if (!rightCrop.empty())
+                    righthanddetector.pushFrame(rightCrop);
+                AllHandKeypoints posehand;
+                if (righthanddetector.getLatestPose(posehand))
+                {
+                    for (const auto& kp : posehand.keypointshand)
+                    {
+                        if (kp.confidence > 0.5f)
+                        {
+                            cv::Point pt(
+                                static_cast<int>(kp.x + rightROI.x),
+                                static_cast<int>(kp.y + rightROI.y)
+                            );
+                            cv::circle(frame, pt, 4, cv::Scalar(55, 55, 0), -1);
+                        }
+                    }
+                }
+            }
             f = cv::waitKey(1);
             if (f != -1)
             {
@@ -223,6 +308,31 @@ int main()
                     2);
             }
         }
+
+        // HANDS SECTION
+        //if (posestate.ps_bodystate.leftWristXcoord)
+        //{
+        //    float lwx = posestate.ps_bodystate.leftWristXcoord;
+        //    float lwy = posestate.ps_bodystate.leftWristYcoord;
+        //    int radius = 200;
+        //    int x0 = static_cast<int>(lwx) - radius;
+        //    int y0 = static_cast<int>(lwy) - radius;
+        //    int x1 = static_cast<int>(lwx) + radius;
+        //    int y1 = static_cast<int>(lwy) + radius;
+        //    int w = 2 * radius;
+        //    int h = 2 * radius;
+
+        //    // Clamp to image bounds
+        //    x0 = std::clamp(x0, 0, frame.cols - 1);
+        //    y0 = std::clamp(y0, 0, frame.rows - 1);
+        //    x1 = std::clamp(x1, 0, frame.cols - 1);
+        //    y1 = std::clamp(y1, 0, frame.rows - 1);
+        //    w = std::clamp(w, 1, frame.cols - x0);
+        //    h = std::clamp(h, 1, frame.rows - y0);
+
+        //    cv::rectangle(frame, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 255, 255), 1);
+        //    cv::Rect roi(x0, y0, w, h);
+        //}
         cv::flip(frame, flippedframe, 1); 
         cv::imshow("Camera", flippedframe);
         
@@ -231,5 +341,7 @@ int main()
             break;
     }
     keypointdetector.stop(); //stop worker thread
+    lefthanddetector.stop();
+    righthanddetector.stop();
     return 0;
 }

@@ -1,17 +1,18 @@
 #include "AnalyserHand.h"
+#include <iostream>
 
 PSHandState AnalyserHand::analyseHand(const AllKeypoints& keypoint)
 {
     PSHandState handstate;
 
-    //if (keypoint.keypoints.size() < 17)
-    //{
-    //    handstate.isVisible = false;
-    //    return bodystate;
-    //}
+    if (keypoint.keypoints.size() < 17)
+    { 
+        handstate.isVisible = false;
+        return handstate;
+    }
 
-    //else
-    //    handstate.isVisible = true;
+    else
+        handstate.isVisible = true;
     const auto& lw = keypoint.keypoints[LEFT_WRIST];
     const auto& rw = keypoint.keypoints[RIGHT_WRIST];
 

@@ -1,9 +1,8 @@
-#include "KeypointDetector.h"
+#include "KeypointHandDetector.h"
 #include <iostream>
-#define NDEBUG
 
 // resize, pad inpt img so it matches model's expected ip size (KEEPS ASPECT RATIO SAME)
-static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& info) 
+static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfoHand& info)
 {
     float r = std::min((float)newShape.width / src.cols, (float)newShape.height / src.rows);
 
@@ -28,15 +27,15 @@ static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& i
     return out;
 }
 
-void KeypointDetector::start() //start worker thread
+void KeypointHandDetector::start() //start worker thread
 {
     if (running) return;
     running = true;
-    workerThread = std::thread(&KeypointDetector::workerLoop, this);
-    std::cout << "starting body worker thread\n";
+    workerThread = std::thread(&KeypointHandDetector::workerLoop, this);
+    std::cout << "starting hand worker thread\n";
 }
 
-void KeypointDetector::stop() //stop worker thread
+void KeypointHandDetector::stop() //stop worker thread
 {
     if (!running) return;
     running = false;
@@ -53,18 +52,18 @@ void KeypointDetector::stop() //stop worker thread
     }
 }
 
-KeypointDetector::KeypointDetector() //create onnx runtime env, set optimisation settings here
-	: env(ORT_LOGGING_LEVEL_WARNING, "KeypointDetector") 
+KeypointHandDetector::KeypointHandDetector() //create onnx runtime env, set optimisation settings here
+    : env(ORT_LOGGING_LEVEL_WARNING, "KeypointDetector")
 {
-	sessionOptions.SetGraphOptimizationLevel(
-		GraphOptimizationLevel::ORT_ENABLE_ALL);
+    sessionOptions.SetGraphOptimizationLevel(
+        GraphOptimizationLevel::ORT_ENABLE_ALL);
 }
-KeypointDetector::~KeypointDetector() // destructor
+KeypointHandDetector::~KeypointHandDetector() // destructor
 {
     stop(); // make sure worker thread joined! (stop() defined above)
 }
 
-void KeypointDetector::pushFrame(const cv::Mat& frame)// main thread writes to pendingFrame
+void KeypointHandDetector::pushFrame(const cv::Mat& frame)// main thread writes to pendingFrame
 {
     {
         std::lock_guard<std::mutex> lock(frameMutex);
@@ -73,7 +72,7 @@ void KeypointDetector::pushFrame(const cv::Mat& frame)// main thread writes to p
     }
 }
 
-bool KeypointDetector::getLatestPose(AllKeypoints& out)// main thread reads latestPose
+bool KeypointHandDetector::getLatestPose(AllHandKeypoints& out)// main thread reads latestPose
 {
     std::lock_guard<std::mutex> lock(poseMutex);
     if (!hasLatestPose)
@@ -82,14 +81,14 @@ bool KeypointDetector::getLatestPose(AllKeypoints& out)// main thread reads late
     return true;
 }
 
-void KeypointDetector::workerLoop()
+void KeypointHandDetector::workerLoop()
 {
     while (running)
     {
         cv::Mat workFrame;
         bool haveFrame = false;
 
-        // grab pending frame (ifany)
+        // grab pending frame (if any)
         std::lock_guard<std::mutex> lock(frameMutex);
         if (hasPendingFrame)
         {
@@ -105,14 +104,14 @@ void KeypointDetector::workerLoop()
         }
 
         auto poses = detect(workFrame); // BOOM just run this in this here worker thread
-        AllKeypoints bestPose;
+        AllHandKeypoints bestPose;
         bool hasPose = false;
 
         if (!poses.empty())
         {
             auto best = std::max_element(
                 poses.begin(), poses.end(),
-                [](const AllKeypoints& a, const AllKeypoints& b)
+                [](const AllHandKeypoints& a, const AllHandKeypoints& b)
                 {
                     return a.score < b.score;
                 });
@@ -128,7 +127,7 @@ void KeypointDetector::workerLoop()
     }
 }
 
-bool KeypointDetector::loadModel(const std::wstring& modelPath)
+bool KeypointHandDetector::loadModel(const std::wstring& modelPath)
 {
     try
     {
@@ -138,16 +137,15 @@ bool KeypointDetector::loadModel(const std::wstring& modelPath)
     }
     catch (const Ort::Exception& e)
     {
-        std::cout << "ONNX load failed: " << e.what() << "\n";
+        std::cout << "Hand ONNX load failed: " << e.what() << "\n";
         return false;
     }
-
 }
 
 //convert opencv's Mat to vector type for onnx model to read
-std::vector<float> KeypointDetector::preprocess(const cv::Mat& frame)
+std::vector<float> KeypointHandDetector::preprocess(const cv::Mat& frame)
 {
-    LetterboxInfo info{};
+    LetterboxInfoHand info{};
     cv::Mat boxed = letterbox(frame, inputSize, info);
 
     cv::Mat rgb, floatImg;
@@ -168,23 +166,44 @@ std::vector<float> KeypointDetector::preprocess(const cv::Mat& frame)
 }
 
 //convert model output to actual keypoints (in original image coords!)
-std::vector<AllKeypoints> KeypointDetector::postprocess(const std::vector<float>& output, const cv::Size& originalSize)
+std::vector<AllHandKeypoints> KeypointHandDetector::postprocess(const std::vector<float>& output, const cv::Size& originalSize)
 {
-    std::vector<AllKeypoints> keypoints;
+    std::vector<AllHandKeypoints> keypoints;
 
-    const int numKeypoints = 17;
-    const int numAttributes = 56; // 4 box + 1 score + 51 kps. uncomment outInfo.GetShape() to check.
-    const int numCandidates = 8400;
-    const float confThresh = 0.65f; //only keep valid pts
+    const int numKeypoints = 21;
+    // uncomment outInfo.GetShape() to check what values for the following 2 vals
+    const int numAttributes = 69; // 4 box + 1 score + 64 values per candidate. 
+    const int numCandidates = 300; // characteristics/attributes
+    const float confThresh = 0.15f; //only keep valid pts
 
     if (output.size() < static_cast<size_t>(numAttributes * numCandidates)) //if o/p too smol.
         return keypoints;
 
     auto at = [&](int attr, int idx) -> float
     {
-        return output[attr * numCandidates + idx];
+        return output[attr * numAttributes + idx];
     };
-    
+
+#ifdef DEBUG
+    // Debug: find max score
+    float maxScore = 0.0f;
+    int maxIdx = -1;
+    for (int i = 0; i < numCandidates; ++i)
+    {
+        float score = at(i, 4);
+        if (score > maxScore)
+        {
+            maxScore = score;
+            maxIdx = i;
+        }
+    }
+
+    std::cout << "Hand model: maxScore = " << maxScore
+        << " at candidate " << maxIdx << "\n";
+
+
+#endif
+
     float gain = std::min((float)inputSize.width / originalSize.width, (float)inputSize.height / originalSize.height);
     float padX = (inputSize.width - originalSize.width * gain) * 0.5f;
     float padY = (inputSize.height - originalSize.height * gain) * 0.5f;
@@ -192,43 +211,42 @@ std::vector<AllKeypoints> KeypointDetector::postprocess(const std::vector<float>
 
     for (int i = 0; i < numCandidates; ++i)
     {
-        float score = at(4, i);
+        float score = at(i, 4);
         if (score < confThresh)
             continue;
 
-        AllKeypoints keypoint;
-        keypoint.keypoints.reserve(numKeypoints);
+        AllHandKeypoints keypoint;
+        keypoint.keypointshand.reserve(numKeypoints);
+        keypoint.score = score;
 
         for (int k = 0; k < numKeypoints; ++k)
         {
-            int attrBase = 5 + k * 3;
+            int attrBase = 6 + k * 3;
 
-            float x = at(attrBase + 0, i);
-            float y = at(attrBase + 1, i);
-            float kpConf = at(attrBase + 2, i);
+            float x = at(i, attrBase + 0);
+            float y = at(i, attrBase + 1);
+            float kpConf = at(i, attrBase + 2);
 
             x = (x - padX) / gain;
             y = (y - padY) / gain;
 
-            if (x < 0.0f) x = 0.0f;
-            if (y < 0.0f) y = 0.0f;
-            if (x > originalSize.width - 1) x = (float)(originalSize.width - 1);
-            if (y > originalSize.height - 1) y = (float)(originalSize.height - 1);
+            x = std::clamp(x, 0.0f, static_cast<float>(originalSize.width - 1));
+            y = std::clamp(y, 0.0f, static_cast<float>(originalSize.height - 1));
 
-            Keypoint kp;
+            KeypointHand kp;
             kp.x = x;
             kp.y = y;
             kp.confidence = kpConf;
 
-            keypoint.keypoints.push_back(kp);
+            keypoint.keypointshand.push_back(kp);
         }
 
         keypoints.push_back(std::move(keypoint));
     }
-        return keypoints;
+    return keypoints;
 }
 
-std::vector<AllKeypoints> KeypointDetector::detect(const cv::Mat& frame)
+std::vector<AllHandKeypoints> KeypointHandDetector::detect(const cv::Mat& frame)
 {
     if (!session) //make sure model loaded!
         return { };
@@ -239,10 +257,10 @@ std::vector<AllKeypoints> KeypointDetector::detect(const cv::Mat& frame)
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
     //allocate from CPU arena, and use default CPU memory type.
 
-    Ort::Value inputTensor = Ort::Value::CreateTensor<float>(memoryInfo, 
-        inputData.data(), 
-        inputData.size(), 
-        inputShape.data(), 
+    Ort::Value inputTensor = Ort::Value::CreateTensor<float>(memoryInfo,
+        inputData.data(),
+        inputData.size(),
+        inputShape.data(),
         inputShape.size());
 
     Ort::AllocatorWithDefaultOptions allocator; //to get ip/op names safely
@@ -267,15 +285,15 @@ std::vector<AllKeypoints> KeypointDetector::detect(const cv::Mat& frame)
 #ifdef DEBUG
     auto outShape = outInfo.GetShape(); // Get actual shape.
 
-    std::cout << "Output shape = [";
+    std::cout << "Hand Output shape = [";
     for (size_t i = 0; i < outShape.size(); ++i)
     {
         if (i) std::cout << ", ";
         std::cout << outShape[i];
     }
     std::cout << "]\n";
-    
 #endif
+
     size_t outCount = outInfo.GetElementCount(); //total float vals in op
 
     const float* outData = outTensor.GetTensorData<float>(); //raw ptr to tensor contents
@@ -290,7 +308,7 @@ std::vector<AllKeypoints> KeypointDetector::detect(const cv::Mat& frame)
     }
     std::cout << "\n";
 #endif
+
     std::vector<float> output(outData, outData + outCount); //copy op to normal vector
     return postprocess(output, frame.size()); //convt raw op to poses
-
 }

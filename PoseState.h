@@ -1,5 +1,5 @@
 #pragma once
-
+#include <opencv2/core.hpp>
 // Plain Old Data (POD) object! just collates all the info the app might glean from my frame. NEAT.
 
 struct PSHeadState
@@ -50,11 +50,21 @@ struct PSBodyState
 	bool left = false;
 	bool right = false;
 
+	float leftWristXcoord;
+	float leftWristYcoord;
+	float rightWristXcoord;
+	float rightWristYcoord;
+	cv::Rect leftHandROI;
+	cv::Rect rightHandROI;
+	bool hasLeftHandROI = false;
+	bool hasRightHandROI = false;
+
 };
 
 struct PSHandState
 {
-	bool isVisibleLeft = false;
+	bool isVisible = false;
+	bool isVisibleLeft = false; // top or these 2 lines?
 	bool isVisibleRight = false;
 };
 

@@ -163,6 +163,7 @@
     <ClCompile Include="AnalyserHand.cpp" />
     <ClCompile Include="InputController.cpp" />
     <ClCompile Include="KeypointDetector.cpp" />
+    <ClCompile Include="KeypointHandDetector.cpp" />
     <ClCompile Include="PoseState.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +176,8 @@
     <ClInclude Include="InputController.h" />
     <ClInclude Include="Keypoint.h" />
     <ClInclude Include="KeypointDetector.h" />
+    <ClInclude Include="KeypointHand.h" />
+    <ClInclude Include="KeypointHandDetector.h" />
     <ClInclude Include="PoseState.h" />
   </ItemGroup>
   <ItemGroup>

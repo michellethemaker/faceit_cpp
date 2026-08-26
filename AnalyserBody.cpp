@@ -1,4 +1,5 @@
 #include "AnalyserBody.h"
+#include <opencv2/opencv.hpp> // for ROI of hands
 #include <cmath>
 #include "CommonMath.h"
 #include <iostream>
@@ -41,6 +42,28 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 
     bodystate.left = cmath.Angle(ls, lh, rh)> 1.8;
     bodystate.right = cmath.Angle(rs, rh, lh) > 1.8;
+
+
+    bodystate.leftWristXcoord = lw.x;
+    bodystate.leftWristYcoord = lw.y;
+    bodystate.rightWristXcoord = rw.x;
+    bodystate.rightWristYcoord = rw.y;
+    
+    float radius = 200; // TODO: scale this to shoulder width
+    float lx = static_cast<float>(lw.x);
+    float ly = static_cast<float>(lw.y);
+    float rx = static_cast<float>(rw.x);
+    float ry = static_cast<float>(rw.y);
+
+    cv::Rect leftROI( lx - radius, ly - radius,
+                        2 * radius, 2 * radius );
+
+    cv::Rect rightROI( rx - radius, ry - radius,
+                        2 * radius, 2 * radius );
+    bodystate.leftHandROI = leftROI;
+    bodystate.rightHandROI = rightROI;
+    bodystate.hasLeftHandROI = lw.confidence > 0.5f;  // or your own visibility logic
+    bodystate.hasRightHandROI = rw.confidence > 0.5f;
     //std::cout << bodystate.left<< "||"<< bodystate.right << "\n";
     //if (bodystate.leftLegUp) std::cout << "<<<<<<<LEFT\n";
     //if (bodystate.rightLegUp) std::cout << "RIGHT>>>>>>>>\n";
