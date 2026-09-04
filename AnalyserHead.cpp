@@ -61,32 +61,34 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     const auto& rear = keypoint.keypoints[RIGHT_EAR];
     const auto& nose = keypoint.keypoints[NOSE];
     
-    double leftvsrightdist = commonmath.EuclDist(lear, nose) - commonmath.EuclDist(rear, nose);
-    double eyedist = commonmath.EuclDist(leye, reye);
-    double leftvsrightdist_normalised = leftvsrightdist / eyedist;
-    double pitch = commonmath.SignedAngle(lear, nose, rear);
-    double pitch_normalised = (pitch / 6.28);
+    float leftvsrightdist = commonmath.EuclDist(lear, nose) - commonmath.EuclDist(rear, nose);
+    float eyedist = commonmath.EuclDist(leye, reye);
+    float leftvsrightdist_normalised = leftvsrightdist / eyedist;
+    float pitch = commonmath.SignedAngle(lear, nose, rear);
+    float pitch_normalised = (pitch / 6.28);
+    float scaleFactorLR = 2.2;
+    float scaleFactorUD = 2.2;
 
     if (leftvsrightdist_normalised < 0 && leftvsrightdist_normalised < -0.9)
     {
         //std::cout << "<<<<<<<<<<<\n";
-        headstate.headXleft_val = leftvsrightdist_normalised;
+        headstate.headXleft_val = leftvsrightdist_normalised * scaleFactorLR;
         headstate.headXleft = true;
         headstate.headXright = false;
     }
     if (leftvsrightdist_normalised > 0 && leftvsrightdist_normalised > 0.9)
     {
         //std::cout << "           >>>>>>>>>>>>\n";
-        headstate.headXright_val = leftvsrightdist_normalised;
+        headstate.headXright_val = leftvsrightdist_normalised * scaleFactorLR;
         headstate.headXleft = false;
         headstate.headXright = true;
     }
     
-    //std::cout << pitch_normalised <<"||"<< pitch << "\n";
-    if (pitch> 1 && pitch <3)
+    //std::cout << 1 / pitch_normalised <<"||"<< "" << "\n";
+    if (pitch> 1.3 && pitch <2.6)
     {
         //std::cout << "\n^^^^^^^^UP\n";
-        headstate.headYup_val = 1/ pitch_normalised;
+        headstate.headYup_val = scaleFactorUD/ pitch_normalised;
         headstate.headYup = true;
         headstate.headYdown = false;
         
@@ -94,7 +96,7 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     if (pitch<-1 && pitch > -2.8)
     {
         //std::cout << "\n______DOWN\n";
-        headstate.headYdown_val = 1/ pitch_normalised;
+        headstate.headYdown_val = scaleFactorUD/ pitch_normalised;
         headstate.headYup = false;
         headstate.headYdown = true;
 

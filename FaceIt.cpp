@@ -14,7 +14,7 @@
 #include "InputController.h"
 #include <chrono>
 
-//TODO: more gestures,gesture smoothing, wrist detection (to pass to hand detection)
+//TODO: more gestures,gesture smoothing
 int main()
 {
     std::cout << "INITIALISING!\n";
@@ -22,9 +22,9 @@ int main()
     Camera camera;
     KeypointDetector keypointdetector;
     KeypointHandDetector lefthanddetector;
-    KeypointHandDetector righthanddetector;
+    //KeypointHandDetector righthanddetector;
     PSPoseState posestate;
-    //AnalyserHand analyserhand;
+    AnalyserHand analyserhand;
     AnalyserBody analyserbody;
     AnalyserHead analyserhead;
     InputController inputcontroller;
@@ -43,24 +43,24 @@ int main()
     else
         std::cout << "BODY MODEL LOADED\n";
         
-    if (!lefthanddetector.loadModel(L"models\\yolo26_hand_pose_fp16.onnx"))
+    if (!lefthanddetector.loadModel(L"models\\yolo26_hand_pose_int8_2.onnx"))
     {
         std::cout << "LHandModel failed to load!";
         return -1;
     }
     else
         std::cout << "LEFT HAND MODEL LOADED\n";
-    if (!righthanddetector.loadModel(L"models\\yolo26_hand_pose_fp16.onnx"))
-    {
-        std::cout << "RHandModel failed to load!";
-        return -1;
-    }
-    else
-        std::cout << "RIGHT HAND MODEL LOADED\n";
+    //if (!righthanddetector.loadModel(L"models\\yolo26_hand_pose_int8.onnx"))
+    //{
+    //    std::cout << "RHandModel failed to load!";
+    //    return -1;
+    //}
+    //else
+    //    std::cout << "RIGHT HAND MODEL LOADED\n";
 
     keypointdetector.start(); //start worker trhread
     lefthanddetector.start();
-    righthanddetector.start();
+    //righthanddetector.start();
 
     if (!camera.isOpened())
     {
@@ -92,15 +92,6 @@ int main()
 
         if (havePose)
         {
-            //auto best = std::max_element(
-            //    poses.begin(), poses.end(),
-            //    [](const AllKeypoints& a, const AllKeypoints& b)
-            //    {
-            //        return a.score < b.score;
-            //    });
-
-            //const AllKeypoints& pose = *best;
-            // ^^ commented out this part; alrdy settled in keypointdetector while adding worker thread stuff
             for (const auto& kp : pose.keypoints)
             {
                 if (kp.confidence > 0.5f)
@@ -110,7 +101,7 @@ int main()
             posestate.ps_headstate = analyserhead.analyseHead(pose);
 
 
-            if (posestate.ps_bodystate.hasLeftHandROI)
+            if (posestate.ps_bodystate.hasLeftHand)
             {
                 cv::Rect leftROI = posestate.ps_bodystate.leftHandROI;
                 
@@ -124,8 +115,11 @@ int main()
                 if (!leftCrop.empty())
                     lefthanddetector.pushFrame(leftCrop);
                 AllHandKeypoints posehand;
+                
                 if (lefthanddetector.getLatestPose(posehand))
                 {
+                    posestate.ps_handstate = analyserhand.analyseHand(posehand);
+                    //int idx = 0;
                     for (const auto& kp : posehand.keypointshand)
                     {
                         if (kp.confidence > 0.5f)
@@ -135,41 +129,52 @@ int main()
                                 static_cast<int>(kp.y + leftROI.y)
                             );
                             cv::circle(frame, pt, 4, cv::Scalar(115, 15, 0), -1);
+                            //to check keypoints
+                            //cv::putText(
+                            //    frame,
+                            //    std::to_string(idx),
+                            //    pt + cv::Point(5, -5),  // slight offset
+                            //    cv::FONT_HERSHEY_SIMPLEX,
+                            //    0.4,
+                            //    cv::Scalar(0, 255, 255),
+                            //    1
+                            //);
                         }
+                        //idx++;
                     }
                 }
 
             }
 
-            if (posestate.ps_bodystate.hasRightHandROI)
-            {
-                cv::Rect rightROI = posestate.ps_bodystate.rightHandROI;
+            //if (posestate.ps_bodystate.hasRightHand)
+            //{
+            //    cv::Rect rightROI = posestate.ps_bodystate.rightHandROI;
 
-                //clamp
-                rightROI &= cv::Rect(0, 0, frame.cols, frame.rows);
-                cv::Mat rightCrop;
-                if (rightROI.width > 10 && rightROI.height > 10)
-                    rightCrop = frame(rightROI).clone();
+            //    //clamp
+            //    rightROI &= cv::Rect(0, 0, frame.cols, frame.rows);
+            //    cv::Mat rightCrop;
+            //    if (rightROI.width > 10 && rightROI.height > 10)
+            //        rightCrop = frame(rightROI).clone();
 
 
-                if (!rightCrop.empty())
-                    righthanddetector.pushFrame(rightCrop);
-                AllHandKeypoints posehand;
-                if (righthanddetector.getLatestPose(posehand))
-                {
-                    for (const auto& kp : posehand.keypointshand)
-                    {
-                        if (kp.confidence > 0.5f)
-                        {
-                            cv::Point pt(
-                                static_cast<int>(kp.x + rightROI.x),
-                                static_cast<int>(kp.y + rightROI.y)
-                            );
-                            cv::circle(frame, pt, 4, cv::Scalar(55, 55, 0), -1);
-                        }
-                    }
-                }
-            }
+            //    if (!rightCrop.empty())
+            //        righthanddetector.pushFrame(rightCrop);
+            //    AllHandKeypoints posehand;
+            //    if (righthanddetector.getLatestPose(posehand))
+            //    {
+            //        for (const auto& kp : posehand.keypointshand)
+            //        {
+            //            if (kp.confidence > 0.5f)
+            //            {
+            //                cv::Point pt(
+            //                    static_cast<int>(kp.x + rightROI.x),
+            //                    static_cast<int>(kp.y + rightROI.y)
+            //                );
+            //                //cv::circle(frame, pt, 4, cv::Scalar(55, 55, 0), -1);
+            //            }
+            //        }
+            //    }
+            //}
             f = cv::waitKey(1);
             if (f != -1)
             {
@@ -342,6 +347,6 @@ int main()
     }
     keypointdetector.stop(); //stop worker thread
     lefthanddetector.stop();
-    righthanddetector.stop();
+    //righthanddetector.stop();
     return 0;
 }

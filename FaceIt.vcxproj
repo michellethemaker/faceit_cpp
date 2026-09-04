@@ -174,6 +174,7 @@
     <ClInclude Include="Hand.h" />
     <ClInclude Include="AnalyserHand.h" />
     <ClInclude Include="InputController.h" />
+    <ClInclude Include="KeyboardConstants.h" />
     <ClInclude Include="Keypoint.h" />
     <ClInclude Include="KeypointDetector.h" />
     <ClInclude Include="KeypointHand.h" />

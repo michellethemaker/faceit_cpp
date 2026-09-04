@@ -42,6 +42,8 @@ struct PSBodyState
 	bool isCrouching = false;
 	bool leftArmUp = false;
 	bool rightArmUp = false;
+	bool grabLeftShoulder = false;
+	bool grabRightShoulder = false;
 	bool headLeft = false;
 	bool headRight = false;
 	bool toot = false;
@@ -49,16 +51,20 @@ struct PSBodyState
 	bool rightLegUp = false;
 	bool left = false;
 	bool right = false;
+	bool crouching = false;
 
 	float leftWristXcoord;
 	float leftWristYcoord;
 	float rightWristXcoord;
 	float rightWristYcoord;
+	float currAvgHips;
+	float currAvgShoulders;
 	cv::Rect leftHandROI;
 	cv::Rect rightHandROI;
-	bool hasLeftHandROI = false;
-	bool hasRightHandROI = false;
-
+	bool hasLeftHand = false;
+	bool hasRightHand = false;
+	bool leftOverRightHand = false; //reload movement
+	bool rightOverLeftShoulder = false; // E trigger
 };
 
 struct PSHandState
@@ -66,6 +72,11 @@ struct PSHandState
 	bool isVisible = false;
 	bool isVisibleLeft = false; // top or these 2 lines?
 	bool isVisibleRight = false;
+	bool indexDown= false;
+	bool middleDown = false;
+	bool ringDown = false;
+	bool pinkyDown = false;
+	bool closedFist = false;
 };
 
 struct PSPoseState

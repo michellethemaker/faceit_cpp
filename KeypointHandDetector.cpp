@@ -174,7 +174,7 @@ std::vector<AllHandKeypoints> KeypointHandDetector::postprocess(const std::vecto
     // uncomment outInfo.GetShape() to check what values for the following 2 vals
     const int numAttributes = 69; // 4 box + 1 score + 64 values per candidate. 
     const int numCandidates = 300; // characteristics/attributes
-    const float confThresh = 0.15f; //only keep valid pts
+    const float confThresh = 0.35f; //only keep valid pts
 
     if (output.size() < static_cast<size_t>(numAttributes * numCandidates)) //if o/p too smol.
         return keypoints;

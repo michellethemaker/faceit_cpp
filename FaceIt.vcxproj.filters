@@ -83,6 +83,9 @@
     <ClInclude Include="KeypointHand.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="KeyboardConstants.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

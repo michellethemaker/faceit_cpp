@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Keypoint.h"
+#include "KeypointHand.h"
 #include "PoseState.h"
 
 class AnalyserHand
 {
 public:
-    PSHandState analyseHand(const AllKeypoints& keypoint); // use posestate
+    PSHandState analyseHand(const AllHandKeypoints& keypoint); // use posestate
 };
