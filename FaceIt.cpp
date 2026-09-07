@@ -35,21 +35,29 @@ int main()
     // Set level to WARNING n suppress INFO logs
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_WARNING);
 
-    if (!keypointdetector.loadModel(L"models\\yolov8n-pose.onnx"))
+    //if (!keypointdetector.loadPersonModel(L"models\\person_detection_mediapipe_2023mar.onnx")) //int8 model causes quantisation error!!
+    //{
+    //    std::cout << "Person Detection Model failed to load!";
+    //    return -1;
+    //}
+    //else
+    //    std::cout << "PERSON DETECTION MODEL LOADED\n";
+
+    if (!keypointdetector.loadModel(L"models\\pose_estimation_mediapipe_2023mar.onnx"))
     {
-        std::cout << "Model failed to load!";
+        std::cout << "Body model failed to load!";
         return -1;
     }
     else
         std::cout << "BODY MODEL LOADED\n";
         
-    if (!lefthanddetector.loadModel(L"models\\yolo26_hand_pose_int8_2.onnx"))
-    {
-        std::cout << "LHandModel failed to load!";
-        return -1;
-    }
-    else
-        std::cout << "LEFT HAND MODEL LOADED\n";
+    //if (!lefthanddetector.loadModel(L"models\\yolo26_hand_pose_int8_2.onnx"))
+    //{
+    //    std::cout << "LHandModel failed to load!";
+    //    return -1;
+    //}
+    //else
+    //    std::cout << "LEFT HAND MODEL LOADED\n";
     //if (!righthanddetector.loadModel(L"models\\yolo26_hand_pose_int8.onnx"))
     //{
     //    std::cout << "RHandModel failed to load!";
@@ -57,9 +65,9 @@ int main()
     //}
     //else
     //    std::cout << "RIGHT HAND MODEL LOADED\n";
-
+    keypointdetector.printModelInfo();
     keypointdetector.start(); //start worker trhread
-    lefthanddetector.start();
+    //lefthanddetector.start();
     //righthanddetector.start();
 
     if (!camera.isOpened())
@@ -82,6 +90,21 @@ int main()
             std::cout << "CAN'T GET FRAME\n";
             break;
         }
+        //PersonROI roi;
+        //if (keypointdetector.detectPerson(frame, roi))
+        //{
+        //    cv::rectangle( frame, cv::Rect(
+        //            static_cast<int>(roi.center.x - roi.size.width * 0.5f),
+        //            static_cast<int>(roi.center.y - roi.size.height * 0.5f),
+        //            static_cast<int>(roi.size.width),
+        //            static_cast<int>(roi.size.height)
+        //        ),
+        //        cv::Scalar(255, 0, 0),
+        //        2
+        //    );
+       
+        //}
+        //keypointdetector.detectPerson(frame, roi);
         keypointdetector.pushFrame(frame); //send frame to worker
         //keypointhanddetector.pushFrame(frame); //send frame to worker
         //auto poses = keypointdetector.detect(frame);
@@ -92,10 +115,16 @@ int main()
 
         if (havePose)
         {
+            int idx = 0;
             for (const auto& kp : pose.keypoints)
             {
                 if (kp.confidence > 0.5f)
+                {
                     cv::circle(frame, cv::Point((int)kp.x, (int)kp.y), 4, cv::Scalar(0, 255, 0), -1);
+                    cv::putText(frame, std::to_string(idx), cv::Point((int)kp.x, (int)kp.y),  // slight offset
+                                    cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 12, 12), 2 );
+                }
+                ++idx;
             }
             posestate.ps_bodystate = analyserbody.analyseBody(pose);
             posestate.ps_headstate = analyserhead.analyseHead(pose);
@@ -346,7 +375,7 @@ int main()
             break;
     }
     keypointdetector.stop(); //stop worker thread
-    lefthanddetector.stop();
+    //lefthanddetector.stop();
     //righthanddetector.stop();
     return 0;
 }
