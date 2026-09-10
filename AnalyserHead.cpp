@@ -1,5 +1,6 @@
 #include "AnalyserHead.h"
 #include "CommonMath.h"
+#include "AppConfig.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -8,39 +9,80 @@ PSCalibrateHeadState AnalyserHead::calibrateHead(const AllKeypoints& keypoint, c
 {
     //PSCalibrateHeadState calibrateheadstate;
     CommonMath commonmath;
-    if (keypoint.keypoints.size() < 17)
-        return g_calibHeadState;
+    //if (keypoint.keypoints.size() < 17)
+    //    return g_calibHeadState;
 
     const auto& leye = keypoint.keypoints[LEFT_EYE];
     const auto& reye = keypoint.keypoints[RIGHT_EYE];
+    const auto& meye = keypoint.keypoints[MIDDLE_EYE];
     const auto& lear = keypoint.keypoints[LEFT_EAR];
     const auto& rear = keypoint.keypoints[RIGHT_EAR];
+    const auto& learside = keypoint.keypoints[LEFT_EAR_SIDE];
+    const auto& rearside = keypoint.keypoints[RIGHT_EAR_SIDE];
     const auto& nose = keypoint.keypoints[NOSE];
 
-    //calibrateheadstate.noseXcoord = nose.x;
-    //calibrateheadstate.noseYcoord = nose.y;
+
+    float leftvsrightdist = commonmath.EuclDist(lear, nose) - commonmath.EuclDist(rear, nose);
+    float eyedist = commonmath.EuclDist(leye, reye);
+    float leftvsrightdist_normalised = leftvsrightdist / eyedist;
+
+
+    float upvsdowndist = ((lear.y - learside.y) + (rear.y - rearside.y)) / 2;
+    float vertdist = commonmath.EuclDist(meye, nose);
+    float pitch_normalised = (upvsdowndist / vertdist);
+
     switch (c)
     {
     case 'a':
-        std::cout << "yawLeft saved\n";
-        g_calibHeadState.noseLeftX = nose.x;
-        //calculate other relevant points here
+        std::cout << "yawLeft saved "<< g_calibHeadState.noseLeftX << leftvsrightdist_normalised <<"\n";
+        if (leftvsrightdist_normalised < -0.01) //keep it negative
+        {
+            g_calibHeadState.noseLeftX = leftvsrightdist_normalised;
+        }
+        else
+        {
+            g_calibHeadState.noseLeftX = -0.5;
+            std::cout << "nope not good "<< leftvsrightdist_normalised <<"\n";
+        }
         break;
     case'd':
-        std::cout << "yawRight saved\n";
-        g_calibHeadState.noseRightX = nose.x;
-        //calculate other relevant points here
+        std::cout << "yawRight saved " << g_calibHeadState.noseRightX << leftvsrightdist_normalised << "\n";
+        if (leftvsrightdist_normalised > 0.5) //keep it pos
+        {
+            g_calibHeadState.noseRightX = leftvsrightdist_normalised;
+        }
+        else
+            g_calibHeadState.noseRightX = 1.5;
         break;
     case 'w':
         std::cout << "pitchUp saved\n";
-        g_calibHeadState.noseUpY = nose.y;
-        //calculate other relevant points here
+        if (upvsdowndist > 0.5) //keep it positive
+        {
+            g_calibHeadState.noseUpY = upvsdowndist;
+        }
+        else
+        {
+            g_calibHeadState.noseUpY = 1.5;
+            std::cout << "nope not good " << upvsdowndist << "\n";
+        }
+            
+        std::cout << "pitchUp saved: " << g_calibHeadState.noseUpY << "/n";
+        
         break;
     case 's':
-        g_calibHeadState.noseDownY = nose.y;
-        std::cout << "pitchDown saved: "<< g_calibHeadState.noseUpY << "/n";
+        if (upvsdowndist < -0.5) //keep it negative
+        {
+            g_calibHeadState.noseDownY = upvsdowndist;
+        }
+        else
+        {
+            g_calibHeadState.noseDownY = -1.5;
+            std::cout << "nope not good " << upvsdowndist << "\n";
+        }
+            
+        std::cout << "pitchDown saved: "<< g_calibHeadState.noseDownY << "/n";
         
-        //calculate other relevant points here
+        
         break;
     case 'p':
         std::cout << "CALIB DONE\n";
@@ -56,74 +98,60 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
         return headstate;
 
     const auto& leye = keypoint.keypoints[LEFT_EYE];
+    const auto& meye = keypoint.keypoints[MIDDLE_EYE];
     const auto& reye = keypoint.keypoints[RIGHT_EYE];
     const auto& lear = keypoint.keypoints[LEFT_EAR];
     const auto& rear = keypoint.keypoints[RIGHT_EAR];
+    const auto& learside = keypoint.keypoints[LEFT_EAR_SIDE];
+    const auto& rearside = keypoint.keypoints[RIGHT_EAR_SIDE];
     const auto& nose = keypoint.keypoints[NOSE];
+    const auto& mouth = keypoint.keypoints[MOUTH];
+    const auto& chin = keypoint.keypoints[CHIN];
     
     float leftvsrightdist = commonmath.EuclDist(lear, nose) - commonmath.EuclDist(rear, nose);
     float eyedist = commonmath.EuclDist(leye, reye);
     float leftvsrightdist_normalised = leftvsrightdist / eyedist;
-    float pitch = commonmath.SignedAngle(lear, nose, rear);
-    float pitch_normalised = (pitch / 6.28);
-    float scaleFactorLR = 2.2;
-    float scaleFactorUD = 2.2;
 
-    if (leftvsrightdist_normalised < 0 && leftvsrightdist_normalised < -0.9)
+    float upvsdowndist = ((lear.y- learside.y) + (rear.y- rearside.y)) /2 ;
+    float vertdist = commonmath.EuclDist(meye, nose);
+    float pitch_normalised = (upvsdowndist / vertdist);
+
+    float scaleFactorLR = 3;
+    float scaleFactorUD = 3.8;
+    //std::cout << leftvsrightdist_normalised << "||"<< upvsdowndist << "\n";
+    if (leftvsrightdist_normalised < g_calibHeadState.noseLeftX)
     {
         //std::cout << "<<<<<<<<<<<\n";
-        headstate.headXleft_val = leftvsrightdist_normalised * scaleFactorLR;
+        headstate.headXleft_val = leftvsrightdist_normalised * AppConfigHead::SCALEFACTOR_LR;
         headstate.headXleft = true;
         headstate.headXright = false;
     }
-    if (leftvsrightdist_normalised > 0 && leftvsrightdist_normalised > 0.9)
+    if (leftvsrightdist_normalised > g_calibHeadState.noseRightX)
     {
         //std::cout << "           >>>>>>>>>>>>\n";
-        headstate.headXright_val = leftvsrightdist_normalised * scaleFactorLR;
+        headstate.headXright_val = leftvsrightdist_normalised * AppConfigHead::SCALEFACTOR_LR;
         headstate.headXleft = false;
         headstate.headXright = true;
     }
-    
+    //std::cout << headstate.headXleft_val << "||" << headstate.headXright_val << "\n";
     //std::cout << 1 / pitch_normalised <<"||"<< "" << "\n";
-    if (pitch> 1.3 && pitch <2.6)
+    if (upvsdowndist > g_calibHeadState.noseUpY)//&& pitch_normalised < 2.6)
     {
         //std::cout << "\n^^^^^^^^UP\n";
-        headstate.headYup_val = scaleFactorUD/ pitch_normalised;
+        headstate.headYup_val = pitch_normalised * AppConfigHead::SCALEFACTOR_UD;
         headstate.headYup = true;
         headstate.headYdown = false;
-        
+
     }
-    if (pitch<-1 && pitch > -2.8)
+    if (upvsdowndist < g_calibHeadState.noseDownY)//&& pitch_normalised > -2.8)
     {
         //std::cout << "\n______DOWN\n";
-        headstate.headYdown_val = scaleFactorUD/ pitch_normalised;
+        headstate.headYdown_val = pitch_normalised * AppConfigHead::SCALEFACTOR_UD;
         headstate.headYup = false;
         headstate.headYdown = true;
 
     }
 
-    //std::cout <<"ANGLE: " << pitch << "\n";
-
-
-
-
-    ////x coords
-    //float yawLeftMax = g_calibHeadState.noseLeftX;
-    //float yawRightMax = g_calibHeadState.noseRightX;
-    //std::cout <<                            yawLeftMax << "||" << yawRightMax << "\n";
-    //float yawRaw = nose.x;
-    //float x = (yawRaw - yawLeftMax) / (yawRightMax - yawLeftMax);
-    //headstate.headXcoord = std::clamp(x, 0.0f, 1.0f);
-
-
-    ////y coords
-    //float pitchUpMax = g_calibHeadState.noseUpY;
-    //float pitchDownMax = g_calibHeadState.noseDownY;
-    //std::cout << pitchUpMax<<"||"<<pitchDownMax << "\n";
-    //float pitchRaw = nose.y;
-    //float y = (pitchRaw - pitchUpMax) / (pitchDownMax - pitchUpMax);
-    //headstate.headYcoord = std::clamp(y, 0.0f, 1.0f);
-   
     return headstate;
 }
 

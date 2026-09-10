@@ -44,6 +44,11 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
         float shoulderMidX = (ls.x + rs.x) * 0.5f;
         bodystate.headLeft = nose.confidence > 0.5f && nose.x > shoulderMidX + 20.0f;
         bodystate.headRight = nose.confidence > 0.5f && nose.x < shoulderMidX - 20.0f;
+
+        bodystate.hasLeftShoulder = true;
+        bodystate.hasRightShoulder = true;
+        bodystate.rightShoulderXcoord = rs.x;
+        bodystate.rightShoulderYcoord = rs.y;
     }
     
 
@@ -71,6 +76,7 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
             //   ========== CROUCH LOGIC ==========
             if (ls.confidence > 0.5f && rs.confidence > 0.5f)
             {
+  
                 bodystate.crouching = (cmath.EuclDist(ls, la) / cmath.EuclDist(lh, la) > 2) && (cmath.EuclDist(rs, ra) / cmath.EuclDist(rh, ra) > 2);
                 
                 //===== JUMP LOGIC =====

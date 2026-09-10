@@ -52,11 +52,15 @@ struct PSBodyState
 	bool left = false;
 	bool right = false;
 	bool crouching = false;
+	bool hasLeftShoulder = false;
+	bool hasRightShoulder = false;
 
 	float leftWristXcoord;
 	float leftWristYcoord;
 	float rightWristXcoord;
 	float rightWristYcoord;
+	float rightShoulderXcoord;
+	float rightShoulderYcoord;
 	float currAvgHips;
 	float currAvgShoulders;
 	cv::Rect leftHandROI;

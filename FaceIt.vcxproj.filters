@@ -83,7 +83,7 @@
     <ClInclude Include="KeypointHand.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="KeyboardConstants.h">
+    <ClInclude Include="AppConfig.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
