@@ -43,6 +43,7 @@ public:
 	bool loadModel(const std::wstring& modelPath);
 
 //	bool detectPerson(const cv::Mat& frame, PersonROI& roi); // just detect person
+	cv::Rect fixedPersonCrop(const cv::Mat& frame);
 	std::vector<AllKeypoints> detect(const cv::Mat& frame); //const to be readonly; Mat& to reference frame (no duplicates!)
 
 

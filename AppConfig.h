@@ -20,4 +20,24 @@ struct AppConfigHead
 	static constexpr float SCALEFACTOR_LR = 0.8f;
 	static constexpr float SCALEFACTOR_UD = 0.8f;
 
+	static constexpr float LEFTTILT_MIN = 1.4f;
+	static constexpr float RIGHTTILT_MIN = 1.4f;
+};
+
+struct AppConfigBody
+{
+	// HANDS TODO: MOVE TO HEAD!!! WHAT IS THIS DOING HERE?!!
+	static constexpr float SCALEFACTOR_LR = 0.08f;
+	static constexpr float SCALEFACTOR_UD = 0.08f;
+	static constexpr float DEADZONE_WRIST_MIN = 4.0f;
+	static constexpr float DEADZONE_WRIST_MAX = 350.0f;
+
+	static constexpr float LTHUMB_CLOSE_MAX = 0.4;
+	static constexpr float RTHUMB_CLOSE_MAX = 0.4;
+	// LEGS
+	static constexpr float LLEG_MAX = 1.9f;
+	static constexpr float RLEG_MAX = 1.9f;
+	static constexpr int WALKTIMER_MAX = 135;
+
+	static constexpr float CROUCH_MIN = 0.39f;
 };

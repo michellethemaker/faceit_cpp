@@ -22,6 +22,9 @@ struct PSHeadState
 	float yaw = 0.0f;
 	float pitch = 0.0f;
 	float roll = 0.0f;
+
+	bool tiltLeft = false;
+	bool tiltRight = false;
 };
 
 struct PSCalibrateHeadState
@@ -55,16 +58,30 @@ struct PSBodyState
 	bool hasLeftShoulder = false;
 	bool hasRightShoulder = false;
 
+	bool leftThumbClosed = false;
+	bool leftIndexClosed = false;
+	bool leftPinkyClosed = false;
+	bool leftClosed = false;
+	bool rightThumbClosed = false;
+	bool rightIndexClosed = false;
+	bool rightPinkyClosed = false;
+	bool rightClosed = false;
+
 	float leftWristXcoord;
 	float leftWristYcoord;
-	float rightWristXcoord;
-	float rightWristYcoord;
-	float rightShoulderXcoord;
-	float rightShoulderYcoord;
+	float rightWristXcoord = 0.0f;
+	float rightWristYcoord = 0.0f;
+	float rightShoulderXcoord = 0.0f;
+	float rightShoulderYcoord = 0.0f;
+	float rightWristLR_val = 0.0f;
+	float rightWristUD_val = 0.0f;
+
 	float currAvgHips;
 	float currAvgShoulders;
+
 	cv::Rect leftHandROI;
 	cv::Rect rightHandROI;
+
 	bool hasLeftHand = false;
 	bool hasRightHand = false;
 	bool leftOverRightHand = false; //reload movement

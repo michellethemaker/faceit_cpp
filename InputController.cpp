@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <iostream>
 #include "AppConfig.h"
+//#define DEBUG
 
 float screenWidth = GetSystemMetrics(SM_CXSCREEN);
 float screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -12,7 +13,6 @@ float screenHeight = GetSystemMetrics(SM_CYSCREEN);
 int deadzone = 15;
 bool leftClick = false;
 bool rightClick = false;
-int walkTimerMax = 15;
 int walkTimerCurr = 0;
 bool leftPrev = false;
 bool rightPrev = false;
@@ -72,9 +72,14 @@ void InputController::pushState(const PSPoseState& state)// main thread writes t
 }
 void InputController::workerLoop()
 {
+	using clock = std::chrono::steady_clock;
+	constexpr auto interval = std::chrono::microseconds(8333); // ~120 Hz
+	auto nextTick = clock::now();
 	while (running)
 	{
 		update(pendingState);
+		nextTick += interval;
+		std::this_thread::sleep_until(nextTick);
 	}
 }
 
@@ -94,90 +99,76 @@ void MoveRelative(LONG dx, LONG dy)
 
 void KeyDown(WORD keypress) // W, A, VK_SPACE etc
 {
-	//INPUT input{};
-	//input.type = INPUT_KEYBOARD;
-	//input.ki.wVk = keypress;
-	//input.ki.wScan = MapVirtualKey(keypress, MAPVK_VK_TO_VSC); //VITAL!! w/o scancodes the keys cant be recognised.
-	//input.ki.dwFlags = KEYEVENTF_SCANCODE; // default was 0, but scancode required in fps games
-	//SendInput(1, &input, sizeof(INPUT));
+#ifndef DEBUG
+	INPUT input{};
+	input.type = INPUT_KEYBOARD;
+	input.ki.wVk = keypress;
+	input.ki.wScan = MapVirtualKey(keypress, MAPVK_VK_TO_VSC); //VITAL!! w/o scancodes the keys cant be recognised.
+	input.ki.dwFlags = KEYEVENTF_SCANCODE; // default was 0, but scancode required in fps games
+	SendInput(1, &input, sizeof(INPUT));
+#endif // !DEBUG
+
 }
 
 void KeyUp(WORD keypress)
 {
-	//INPUT input{};
-	//input.type = INPUT_KEYBOARD;
-	//input.ki.wVk = keypress;
-	//input.ki.wScan = MapVirtualKey(keypress, MAPVK_VK_TO_VSC);
-	//input.ki.dwFlags = KEYEVENTF_KEYUP;
-	//SendInput(1, &input, sizeof(INPUT));
+#ifndef DEBUG
+	INPUT input{};
+	input.type = INPUT_KEYBOARD;
+	input.ki.wVk = keypress;
+	input.ki.wScan = MapVirtualKey(keypress, MAPVK_VK_TO_VSC);
+	input.ki.dwFlags = KEYEVENTF_KEYUP;
+	SendInput(1, &input, sizeof(INPUT));
+#endif // !DEBUG
+
 }
 
 void InputController::update(const PSPoseState& state)
 {
 
-	////===================LEFT CLICK VIA LEFT ARM EXTENSION=====================
-	//if (state.ps_bodystate.grabLeftShoulder)
-	//{
-	//	std::cout << "LCLICK\n";
-	//	//mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-	//	//MoveRelative(1, 0);
-	//	leftClick = true;
-	//	//Sleep(500);
-	//}
-	//else if (leftClick == true && !state.ps_bodystate.grabLeftShoulder)
-	//{
-	//	//mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-	//	leftClick = false;
-	//}
-
-	//if (state.ps_bodystate.grabRightShoulder)
-	//{
-	//	std::cout << "RCLICK\n";
-	//	//mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
-	//	rightClick = true;
-	//}
-	//else if (rightClick == true && !state.ps_bodystate.grabRightShoulder)
-	//{
-	//	//mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
-	//}
-
-	
-	//===================HEAD MOVEMENT (POV CONTROL)=====================
-	//scaled acc to how much u turn ur head. need to handle the scale, make sure up/down scale = left/right scale.
-	//if (state.ps_headstate.headYup)
-	//{
-	//	//std::cout << state.ps_headstate.headYup_val<<"\n";
-	//	MoveRelative(0, -1 * (state.ps_headstate.headYup_val));//TODO: fix these, normalise somehow.
-	//}
-	//else if (state.ps_headstate.headYdown)
-	//{
-	//	//std::cout << state.ps_headstate.headYdown_val << "\n";
-	//	MoveRelative(0,  (-1) * (state.ps_headstate.headYdown_val));//TODO: fix these, normalise somehow.
-	//}
-	//if (state.ps_headstate.headXleft)
-	//{
-	//	//std::cout << state.ps_headstate.headXleft_val << "\n";
-	//	MoveRelative(-1 * (state.ps_headstate.headXleft_val), 0);
-	//}
-	//else if (state.ps_headstate.headXright)
-	//{
-	//	//std::cout << "             " << state.ps_headstate.headXright_val << "\n";
-	//	MoveRelative( (-1) * (state.ps_headstate.headXright_val), 0);
-	//}
-	//
-	
-	if (state.ps_bodystate.hasRightShoulder) // UP/DOWN
+	//===================LEFT CLICK =====================
+	if (state.ps_bodystate.leftThumbClosed)
 	{
-		//std::cout << state.ps_headstate.headYup_val<<"\n";
-		MoveRelative(0, 0.05f*(state.ps_bodystate.rightWristYcoord - state.ps_bodystate.rightShoulderYcoord));//TODO: fix these, normalise somehow.
+		//std::cout << "LCLICK\n";
+#ifndef DEBUG
+		mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+#endif // !DEBUG
+		//MoveRelative(1, 0);
+		leftClick = true;
+		//Sleep(500);
+	}
+	else if (leftClick == true && !state.ps_bodystate.leftThumbClosed)
+	{
+#ifndef DEBUG
+		mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+#endif // !DEBUG
+
+		leftClick = false;
 	}
 
-	if (state.ps_bodystate.hasRightShoulder) // LEFT/RIGHT
+	//===================RIGHT CLICK =====================
+	if (state.ps_bodystate.leftIndexClosed)
 	{
-		std::cout <<  state.ps_bodystate.rightWristXcoord - state.ps_bodystate.rightShoulderXcoord << "\n";
-		MoveRelative(0.05f * (state.ps_bodystate.rightWristXcoord - state.ps_bodystate.rightShoulderXcoord ), 0);
+		//std::cout << "RCLICK\n";
+#ifndef DEBUG
+		mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+#endif // !DEBUG
+		rightClick = true;
 	}
+	else if (rightClick == true && !state.ps_bodystate.leftIndexClosed)
+	{
+#ifndef DEBUG
+		mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
+#endif // !DEBUG
+	}
+	
+	//===================MOUSE MOVEMENT (POV CONTROL)=====================
 
+	if (state.ps_bodystate.hasRightShoulder && state.ps_bodystate.rightPinkyClosed)
+	{
+		//std::cout << state.ps_bodystate.rightWristLR_val << "||"<<state.ps_bodystate.rightWristUD_val<< "\n";
+		MoveRelative((state.ps_bodystate.rightWristLR_val), (state.ps_bodystate.rightWristUD_val));  // LEFT/RIGHT--UP/DOWN
+	}
 
 	//===================LEFT/RIGHT TRIGGER(A, D CONTROL)=====================
 	if (state.ps_bodystate.left ) //&& !leaningLeft
@@ -213,7 +204,7 @@ void InputController::update(const PSPoseState& state)
 			{
 				leftStep = false;
 				rightStep = false;
-				walkTimerCurr = walkTimerMax;
+				walkTimerCurr = AppConfigBody::WALKTIMER_MAX;
 			}
 	}
 	if (state.ps_bodystate.rightLegUp ^ rightPrev && state.ps_bodystate.rightLegUp == false) // falling edge
@@ -225,10 +216,10 @@ void InputController::update(const PSPoseState& state)
 			{
 				leftStep = false;
 				rightStep = false;
-				walkTimerCurr = walkTimerMax;
+				walkTimerCurr = AppConfigBody::WALKTIMER_MAX;
 			}
 	}
-	
+
 	if (walkTimerCurr > 0)
 	{
 		//std::cout << walkTimerCurr<<"STEPPY\n";
@@ -244,6 +235,7 @@ void InputController::update(const PSPoseState& state)
 	{
 		KeyUp('W');
 		walkTimerCurr = 0;
+		//std::cout << "NOTWALKIN\n";
 	}
 	//std::cout << leftStep << "|" << rightStep << "||" << walkTimerCurr << "\n";
 	leftPrev = state.ps_bodystate.leftLegUp; //update prev bools

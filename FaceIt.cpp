@@ -188,22 +188,39 @@ int main()
 
         if (havePose)
         {
-            /*auto best = std::max_element(
-                poses.begin(), poses.end(),
-                [](const AllKeypoints& a, const AllKeypoints& b)
+            int idx = 0;
+            for (const auto& kp : pose.keypoints)
+            {
+                if (kp.confidence > 0.5f)
                 {
-                    return a.score < b.score;
-                });
+                    if (idx == 6 || idx == 5 || idx == 12 || idx == 11 || idx == 13 || idx == 14 ||
+                        idx == 16 || idx == 15 || idx == 22 || idx == 19 ||
+                        idx == 20 || idx == 17 || idx == 21 || idx == 18) // MAIN BODY
+                    {
+                        cv::circle(flippedframe, cv::Point((int)kp.x, (int)kp.y), 3, cv::Scalar(0, 55, 100), -1); // BROWN
+                    }
+                    else if (idx == 53 || idx == 1 || idx == 2 || idx == 50 || idx == 4 || idx == 3 || idx == 80 || idx == 71 || idx == 77 || idx == 31) //FACE
+                    {
+                        cv::circle(flippedframe, cv::Point((int)kp.x, (int)kp.y), 3, cv::Scalar(50, 255, 250), -1); // YELLOW
+                    }
+                    else if (idx == 7 || idx == 9 || idx == 111 || idx == 99 || idx == 95) // RIGHT HAND
+                    {
+                        cv::circle(flippedframe, cv::Point((int)kp.x, (int)kp.y), 3, cv::Scalar(150, 60, 50), -1);
+                    }
+                    else if (idx == 8 || idx == 10 || idx == 132 || idx == 120 || idx == 116) // LEFT HAND
+                    {
+                        cv::circle(flippedframe, cv::Point((int)kp.x, (int)kp.y), 3, cv::Scalar(0, 60, 250), -1);
+                    }
 
-            const AllKeypoints& pose = *best;*/
-            // ^^ commented out this part; alrdy settled in keypointdetector while adding worker thread stuff
-
-            // PRINT KEYPOINTS
-            //for (const auto& kp : pose.keypoints)
-            //{
-            //    if (kp.confidence > 0.5f)
-            //        cv::circle(frame, cv::Point((int)kp.x, (int)kp.y), 4, cv::Scalar(0, 255, 0), -1);
-            //}
+                    else
+                    {
+                        cv::circle(flippedframe, cv::Point((int)kp.x, (int)kp.y), 1, cv::Scalar(0, 155, 10), -1);
+                    }
+                    cv::putText(flippedframe, std::to_string(idx), cv::Point((int)kp.x, (int)kp.y),  // slight offset
+                        cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(150, 250, 170), 1.5);
+                }
+                ++idx;
+            }
 
 
             // BODY GESTURE SECTION
@@ -219,8 +236,6 @@ int main()
                 
                 cv::circle(frame, cv::Point((int)(posestate.ps_headstate.headXcoord * frame.size().width), (int)(posestate.ps_headstate.headYcoord * frame.size().height)) , 6, cv::Scalar(255, 0, 0), -1);
             }
-
-            
 
             if (posestate.ps_bodystate.leftArmUp)
             {
@@ -266,31 +281,6 @@ int main()
                     2);
             }
         }
-
-        // HANDS SECTION
-        //if (posestate.ps_bodystate.leftWristXcoord)
-        //{
-        //    float lwx = posestate.ps_bodystate.leftWristXcoord;
-        //    float lwy = posestate.ps_bodystate.leftWristYcoord;
-        //    int radius = 200;
-        //    int x0 = static_cast<int>(lwx) - radius;
-        //    int y0 = static_cast<int>(lwy) - radius;
-        //    int x1 = static_cast<int>(lwx) + radius;
-        //    int y1 = static_cast<int>(lwy) + radius;
-        //    int w = 2 * radius;
-        //    int h = 2 * radius;
-
-        //    // Clamp to image bounds
-        //    x0 = std::clamp(x0, 0, frame.cols - 1);
-        //    y0 = std::clamp(y0, 0, frame.rows - 1);
-        //    x1 = std::clamp(x1, 0, frame.cols - 1);
-        //    y1 = std::clamp(y1, 0, frame.rows - 1);
-        //    w = std::clamp(w, 1, frame.cols - x0);
-        //    h = std::clamp(h, 1, frame.rows - y0);
-
-        //    cv::rectangle(frame, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 255, 255), 1);
-        //    cv::Rect roi(x0, y0, w, h);
-        //}
         
         cv::imshow("Camera", flippedframe);
         

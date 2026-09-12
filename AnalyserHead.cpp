@@ -107,6 +107,9 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     const auto& nose = keypoint.keypoints[NOSE];
     const auto& mouth = keypoint.keypoints[MOUTH];
     const auto& chin = keypoint.keypoints[CHIN];
+
+    const auto& ls = keypoint.keypoints[LEFT_SHOULDER];
+    const auto& rs = keypoint.keypoints[RIGHT_SHOULDER];
     
     float leftvsrightdist = commonmath.EuclDist(lear, nose) - commonmath.EuclDist(rear, nose);
     float eyedist = commonmath.EuclDist(leye, reye);
@@ -152,6 +155,10 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
 
     }
 
+    // ===== HEAD TILT =====
+    headstate.tiltLeft = cmath.Angle(ls, chin, leye) < AppConfigHead::LEFTTILT_MIN && ls.confidence > 0.5f;
+    headstate.tiltRight = cmath.Angle(rs, chin, reye) < AppConfigHead::RIGHTTILT_MIN && rs.confidence > 0.5f;
+    //std::cout << headstate.tiltLeft << "|" << headstate.tiltRight << "\n";
     return headstate;
 }
 
