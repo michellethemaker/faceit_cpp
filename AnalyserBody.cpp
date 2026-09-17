@@ -26,6 +26,7 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
     const auto& lw = keypoint.keypoints[LEFT_WRIST];
     const auto& rw = keypoint.keypoints[RIGHT_WRIST];
     const auto& nose = keypoint.keypoints[NOSE];
+    const auto& mouth = keypoint.keypoints[MOUTH];
     
     const auto& lh = keypoint.keypoints[LEFT_HIP];
     const auto& rh = keypoint.keypoints[RIGHT_HIP];
@@ -64,6 +65,7 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 
     //TO DO: SET SHOULDER WIDTH AS NORMALISING DISTANCE FOR ALL RATIO-BASED CHECKS
     //TO DO: REORGANISE CONFIDENCE SANITY CHECKS FOR OPTIMISATION
+    //TO DO: SET cmath.EuclDist(ls,rs) as a constant for normalisation
 
     bodystate.leftArmUp = ls.confidence > 0.5f && lw.confidence > 0.5f && lw.y < ls.y;
     bodystate.rightArmUp = rs.confidence > 0.5f && rw.confidence > 0.5f && rw.y < rs.y;
@@ -106,7 +108,7 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
             // =====RIGHT FINGERS CALCULATION=====
             if (rt_b.y < rw.y  && rt_b.confidence > 0.5f) //UPRIGHT 
             { 
-                std::cout << cmath.Angle(rt, rt_b, ri_b) / (cmath.EuclDist(rt, rt_b)) << "\n";
+                //std::cout << cmath.Angle(rt, rt_b, ri_b) / (cmath.EuclDist(rt, rt_b)) << "\n";
                 if (cmath.Angle(rt,rt_b,ri_b)/ (cmath.EuclDist(rt,rt_b)) < AppConfigBody::RTHUMB_CLOSE_MAX && rt.confidence > 0.5f && rt_b.confidence > 0.5f && ri_b.confidence > 0.5f) // THUMB IS STICKY, ANGLES WORK BETTER
                 {
                     bodystate.rightThumbClosed = true;
@@ -132,10 +134,12 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
             }
         }
         if (lw.confidence > 0.5f)
+            // =====LEFT WRIST COVER MOUTH=====
+            bodystate.leftCoverMouth = mouth.confidence > 0.5f && cmath.EuclDist(mouth, lw) / cmath.EuclDist(ls, rs) < AppConfigBody::LEFTCOVERMOUTH_MAX;
             // =====LEFT FINGERS CALCULATION=====
             if (lt_b.y < lw.y && lt_b.confidence > 0.5f) //UPRIGHT 
             {
-                std::cout << cmath.Angle(lt, lt_b, li_b) << "\n";
+                //std::cout << cmath.Angle(lt, lt_b, li_b) << "\n";
                 if ((cmath.Angle(lt, lt_b, li_b) / (cmath.EuclDist(lt, lt_b)))< AppConfigBody::LTHUMB_CLOSE_MAX && lt.confidence > 0.5f && lt_b.confidence > 0.5f && li_b.confidence > 0.5f) // THUMB IS STICKY, ANGLES WORK BETTER
                 {
                     bodystate.leftThumbClosed = true;
@@ -175,8 +179,8 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
     {
         
         //   ========== LEANING LOGIC ==========
-        bodystate.left = cmath.Angle(ls, lh, rh) > 1.8;
-        bodystate.right = cmath.Angle(rs, rh, lh) > 1.8;
+        bodystate.leaningLeft = cmath.Angle(ls, lh, rh) > 1.8;
+        bodystate.leaningRight = cmath.Angle(rs, rh, lh) > 1.8;
 
         //   ========== WALKING LOGIC ==========
         if (la.confidence > 0.5f && ra.confidence > 0.5f && lk.confidence > 0.5f && rk.confidence > 0.5f && lh.confidence > 0.5f && rh.confidence > 0.5f)
@@ -196,13 +200,12 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
             //   ========== CROUCH LOGIC. shoulder-ankle / hip-ankle. TODO: calibrate that limit ==========
             if (ls.confidence > 0.5f && rs.confidence > 0.5f)
             {
-  
-                bodystate.crouching = (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la) < AppConfigBody::CROUCH_MIN) && (cmath.EuclDist(rs, rh) / cmath.EuclDist(rs, ra) < AppConfigBody::CROUCH_MIN);
+                bodystate.crouching = (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la) < AppConfigBody::CROUCH_MAX) && (cmath.EuclDist(rs, rh) / cmath.EuclDist(rs, ra) < AppConfigBody::CROUCH_MAX);
                 if (bodystate.crouching)
                 {
                     std::cout << "==========\n";
                 }
-                //std::cout << (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la)  ) << " \n";
+                std::cout << (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la)  ) << " \n";
                 //===== JUMP LOGIC, USES PREV VALS =====
                 bodystate.currAvgHips = ((lh.y + rh.y) / 2) / (lh.x - rh.x);
                 bodystate.currAvgShoulders = ((ls.y + rs.y) / 2) / (ls.x - rs.x);
@@ -223,10 +226,11 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
         bodystate.leftWristYcoord = lw.y;
 
         // ===== GRAB LSHOULDER =====
-        if (ls.confidence > 0.5f && le.confidence > 0.5f)
+        if (ls.confidence > 0.5f && le.confidence > 0.5f && lw.confidence > 0.5f)
         {
-            //std::cout << cmath.Angle(ls,le,lw)<< "\n";
-            bodystate.grabLeftShoulder = cmath.Angle(ls, le, lw) < 0.5;
+            //std::cout << cmath.Angle(ls,le,lw)<<"|"<< cmath.EuclDist(lw, ls) / cmath.EuclDist(ls, rs)<< "\n";
+            bodystate.grabLeftShoulder = cmath.Angle(ls, le, lw) < AppConfigBody::GRABLEFTSHOULDER_MAXANGLE &&
+                                         cmath.EuclDist(lw, ls)/cmath.EuclDist(ls,rs)  < AppConfigBody::GRABLEFTSHOULDER_MAXDIST;
         }
 
         // ===== RELOAD MOTION =====
@@ -253,7 +257,8 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
         //=====GRAB RSHOULDER=====
         if (rs.confidence > 0.5f && re.confidence > 0.5f)
         {
-            bodystate.grabRightShoulder = cmath.Angle(rs, re, rw) < 0.5;
+            bodystate.grabRightShoulder = cmath.Angle(rs, re, rw) < AppConfigBody::GRABRIGHTSHOULDER_MAXANGLE &&
+                cmath.EuclDist(rw, rs) / cmath.EuclDist(ls, rs) < AppConfigBody::GRABRIGHTSHOULDER_MAXDIST;
         }
     }
     return bodystate;

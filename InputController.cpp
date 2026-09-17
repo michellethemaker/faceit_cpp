@@ -3,6 +3,7 @@
 #include <iostream>
 #include "AppConfig.h"
 //#define DEBUG
+#define DEBUG_NOMOUSE
 
 float screenWidth = GetSystemMetrics(SM_CXSCREEN);
 float screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -23,6 +24,8 @@ bool leaningRight = false;
 bool crouching = false;
 bool reloading = false;
 bool etrigger = false;
+bool scan = false;
+bool leftCoverMouth = false;
 float avgHips;
 float avgShoulders;
 //int deadzone_L = 15;
@@ -103,8 +106,9 @@ void KeyDown(WORD keypress) // W, A, VK_SPACE etc
 	INPUT input{};
 	input.type = INPUT_KEYBOARD;
 	input.ki.wVk = keypress;
-	input.ki.wScan = MapVirtualKey(keypress, MAPVK_VK_TO_VSC); //VITAL!! w/o scancodes the keys cant be recognised.
-	input.ki.dwFlags = KEYEVENTF_SCANCODE; // default was 0, but scancode required in fps games
+	input.ki.wScan = 0;
+	input.ki.dwFlags = 0;
+
 	SendInput(1, &input, sizeof(INPUT));
 #endif // !DEBUG
 
@@ -116,8 +120,9 @@ void KeyUp(WORD keypress)
 	INPUT input{};
 	input.type = INPUT_KEYBOARD;
 	input.ki.wVk = keypress;
-	input.ki.wScan = MapVirtualKey(keypress, MAPVK_VK_TO_VSC);
+	input.ki.wScan = 0;
 	input.ki.dwFlags = KEYEVENTF_KEYUP;
+
 	SendInput(1, &input, sizeof(INPUT));
 #endif // !DEBUG
 
@@ -125,11 +130,10 @@ void KeyUp(WORD keypress)
 
 void InputController::update(const PSPoseState& state)
 {
-
 	//===================LEFT CLICK =====================
-	if (state.ps_bodystate.leftThumbClosed)
+	if (state.ps_bodystate.grabLeftShoulder)
 	{
-		//std::cout << "LCLICK\n";
+		std::cout << "LCLICK\n";
 #ifndef DEBUG
 		mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
 #endif // !DEBUG
@@ -137,7 +141,7 @@ void InputController::update(const PSPoseState& state)
 		leftClick = true;
 		//Sleep(500);
 	}
-	else if (leftClick == true && !state.ps_bodystate.leftThumbClosed)
+	else if (leftClick == true && !state.ps_bodystate.grabLeftShoulder)
 	{
 #ifndef DEBUG
 		mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
@@ -147,15 +151,15 @@ void InputController::update(const PSPoseState& state)
 	}
 
 	//===================RIGHT CLICK =====================
-	if (state.ps_bodystate.leftIndexClosed)
+	if (state.ps_bodystate.grabRightShoulder)
 	{
-		//std::cout << "RCLICK\n";
+		std::cout << "RCLICK\n";
 #ifndef DEBUG
 		mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
 #endif // !DEBUG
 		rightClick = true;
 	}
-	else if (rightClick == true && !state.ps_bodystate.leftIndexClosed)
+	else if (rightClick == true && !state.ps_bodystate.grabRightShoulder)
 	{
 #ifndef DEBUG
 		mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
@@ -164,37 +168,60 @@ void InputController::update(const PSPoseState& state)
 	
 	//===================MOUSE MOVEMENT (POV CONTROL)=====================
 
-	if (state.ps_bodystate.hasRightShoulder && state.ps_bodystate.rightPinkyClosed)
+	//if (state.ps_bodystate.hasRightShoulder && state.ps_bodystate.rightPinkyClosed) // ENABLE IF MOUSE CONTROL ENABLED BY CLOSED FIST
 	{
 		//std::cout << state.ps_bodystate.rightWristLR_val << "||"<<state.ps_bodystate.rightWristUD_val<< "\n";
-		MoveRelative((state.ps_bodystate.rightWristLR_val), (state.ps_bodystate.rightWristUD_val));  // LEFT/RIGHT--UP/DOWN
+		//MoveRelative((state.ps_bodystate.rightWristLR_val), (state.ps_bodystate.rightWristUD_val));  // LEFT/RIGHT--UP/DOWN
+		if (state.ps_headstate.headXleft) 
+		{
+#ifndef DEBUG_NOMOUSE:
+		MoveRelative( (state.ps_headstate.headXleft_val), 0);
+#endif
+			//std::cout << "<<<<<<<<<<<\n";
+		}
+		if (state.ps_headstate.headXright)
+		{
+#ifndef DEBUG_NOMOUSE:
+		MoveRelative((state.ps_headstate.headXright_val), 0);
+#endif
+			//std::cout << "           >>>>>>>>>>>>\n";
+		}
+		if (state.ps_headstate.headYup)
+		{
+#ifndef DEBUG_NOMOUSE:
+		MoveRelative(0, (state.ps_headstate.headYup_val));
+#endif
+			//std::cout << "\n^^^^^^^^UP\n";
+		}
+		if (state.ps_headstate.headYdown)
+		{
+#ifndef DEBUG_NOMOUSE:
+			MoveRelative(0, (state.ps_headstate.headYdown_val));
+#endif
+			//std::cout << "\n______DOWN\n";
+		}
 	}
 
-	//===================LEFT/RIGHT TRIGGER(A, D CONTROL)=====================
-	if (state.ps_bodystate.left ) //&& !leaningLeft
+	//===================SCAN =====================
+	if (state.ps_bodystate.leftArmUp && scan == false)
 	{
-		//std::cout << "LEFT\n";
-		//KeyDown('A');
-		leaningLeft = true;
+#ifndef DEBUG
+		KeyDown(AppConfigKeybinds::KEYBIND_SCAN);
+		KeyDown(AppConfigKeybinds::KEYBIND_SCAN);
+		KeyDown(AppConfigKeybinds::KEYBIND_SCAN);
+		Sleep(100);
+		KeyUp(AppConfigKeybinds::KEYBIND_SCAN);
+		std::cout << "SCAN \n";
+#endif // !DEBUG
+		scan = true;
 	}
-	else if (!state.ps_bodystate.left && leaningLeft == true)
+	else if (scan == true && !state.ps_bodystate.leftArmUp)
 	{
-		//KeyUp('A');
-		leaningLeft = false;
+//#ifndef DEBUG
+		std::cout << "UNSCAN \n";
+//#endif // !DEBUG
+		scan = false;
 	}
-		
-	if (state.ps_bodystate.right )//&& !leaningRight
-	{
-		//std::cout << "         RIGHT\n";
-		//KeyDown('D');
-		leaningRight = true;
-	}
-	else if (!state.ps_bodystate.right && leaningRight == true)
-	{
-		//KeyUp('D');
-		leaningRight = false;
-	}
-
 	//===================WALKING=====================
 
 	if (state.ps_bodystate.leftLegUp ^ leftPrev && state.ps_bodystate.leftLegUp == false) // falling edge
@@ -209,9 +236,7 @@ void InputController::update(const PSPoseState& state)
 	}
 	if (state.ps_bodystate.rightLegUp ^ rightPrev && state.ps_bodystate.rightLegUp == false) // falling edge
 	{
-
 			rightStep = true; //we did a right steppy
-
 			if (leftStep && walkTimerCurr >= 0)
 			{
 				leftStep = false;
@@ -228,7 +253,6 @@ void InputController::update(const PSPoseState& state)
 			KeyDown('W');
 			std::cout << "WALKIN\n";
 		}
-		
 		walkTimerCurr--;
 	}
 	else
@@ -245,8 +269,8 @@ void InputController::update(const PSPoseState& state)
 	if (avgHips -state.ps_bodystate.currAvgHips > 0.13f && avgHips - state.ps_bodystate.currAvgHips < 0.6f &&
 		avgShoulders - state.ps_bodystate.currAvgShoulders > 0.19f) 
 	{
-		KeyDown(VK_SPACE);
-		KeyUp(VK_SPACE);
+		KeyDown(AppConfigKeybinds::KEYBIND_JUMP);
+		KeyUp(AppConfigKeybinds::KEYBIND_JUMP);
 		std::cout << "JUMP\n";
 		std::cout << avgHips - state.ps_bodystate.currAvgHips << "{}"<< avgShoulders - state.ps_bodystate.currAvgShoulders << "\n";
 	}
@@ -258,6 +282,9 @@ void InputController::update(const PSPoseState& state)
 	if (state.ps_bodystate.crouching && crouching == false) 
 	{
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
+		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
+		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
+		Sleep(100);
 		KeyUp(AppConfigKeybinds::KEYBIND_CROUCH);
 		crouching = true;
 		std::cout << "CROUCHING\n";
@@ -265,6 +292,9 @@ void InputController::update(const PSPoseState& state)
 	if (!state.ps_bodystate.crouching && crouching == true)
 	{
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
+		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
+		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
+		Sleep(100);
 		KeyUp(AppConfigKeybinds::KEYBIND_CROUCH);
 		std::cout << "UNCROUCHING\n";
 		crouching = false;
@@ -289,17 +319,39 @@ void InputController::update(const PSPoseState& state)
 	
 	if (state.ps_bodystate.rightOverLeftShoulder && etrigger == false)
 	{
-		KeyDown(AppConfigKeybinds::KEYBIND_ACTION1);
-		KeyUp(AppConfigKeybinds::KEYBIND_ACTION1);
+		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_E);
+		KeyUp(AppConfigKeybinds::KEYBIND_ACTION_E);
 		etrigger = true;
 		std::cout << "E\n";
 	}
 	if (!state.ps_bodystate.rightOverLeftShoulder && etrigger == true)
 	{
-		KeyDown(AppConfigKeybinds::KEYBIND_ACTION1);
-		KeyUp(AppConfigKeybinds::KEYBIND_ACTION1);
+		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_E);
+		KeyUp(AppConfigKeybinds::KEYBIND_ACTION_E);
 		etrigger = false;
 		std::cout << "END E\n";
+	}
+
+	// =====LEFT COVER MOUTH=====
+	if (state.ps_bodystate.leftCoverMouth && leftCoverMouth == false)
+	{
+		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		Sleep(100);
+		KeyUp(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		leftCoverMouth = true;
+		std::cout << "HOLD BREATH\n";
+	}
+	if (!state.ps_bodystate.leftCoverMouth && leftCoverMouth == true)
+	{
+		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		Sleep(100);
+		KeyUp(AppConfigKeybinds::KEYBIND_HOLDBREATH);
+		leftCoverMouth = false;
+		std::cout << "END HOLD BREATH\n";
 	}
 
 }

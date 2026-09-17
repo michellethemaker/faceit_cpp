@@ -12,6 +12,7 @@
 #include "AnalyserHead.h"
 #include "PoseState.h"
 #include "InputController.h"
+#include "AppConfig.h"
 #include <chrono>
 
 //TODO: more gestures,gesture smoothing
@@ -28,6 +29,8 @@ int main()
     AnalyserBody analyserbody;
     AnalyserHead analyserhead;
     InputController inputcontroller;
+    AllKeypoints lastGoodPose;
+    bool haveLastGoodPose = false;
     char f;
     double fps = 0.0;
     double fpsSmoothed = 0.0;
@@ -90,6 +93,47 @@ int main()
         //std::cout << fpsSmoothed << "\n";
         if (havePose)
         {
+            //=====PASS THRU CONF GATE=====
+
+            // make sure lastGoodPose has correct size
+            if (!haveLastGoodPose || lastGoodPose.keypoints.size() != pose.keypoints.size()) {
+                lastGoodPose = pose;// copy everything!
+                haveLastGoodPose = true;
+            }
+
+            // per-keypoint conf gate
+            static std::vector<int> invalidCounts;  // persists across frames
+            if (invalidCounts.size() != pose.keypoints.size())
+                invalidCounts.assign(pose.keypoints.size(), 0); // shld run once upo ninitialisation
+            for (size_t i = 0; i < pose.keypoints.size(); ++i) {
+                float conf = pose.keypoints[i].confidence;
+                bool reliable = (conf >= AppConfigKeypoints::CONF_THRESHOLD);
+
+                if (reliable) 
+                {
+                    // Keep current keypoint as-is; update lastGood
+                    lastGoodPose.keypoints[i].x = pose.keypoints[i].x;
+                    lastGoodPose.keypoints[i].y = pose.keypoints[i].y;
+                    lastGoodPose.keypoints[i].confidence = conf;
+                    invalidCounts[i] = 0;
+                }
+                else { // UNRELIABLE!!! replace w last good
+                    invalidCounts[i]++;
+                    if (invalidCounts[i] > AppConfigKeypoints::INVALID_FRAMES_MAX) {
+                        // bad too long: dont assign lastGoodPose to currr keypoints
+                        pose.keypoints[i].confidence = 0.0f; // mark as low-conf explicitly
+                    }
+                    else
+                    {
+                        // still below invalid_frame_max, use last good keypoints
+                        pose.keypoints[i].x = lastGoodPose.keypoints[i].x;
+                        pose.keypoints[i].y = lastGoodPose.keypoints[i].y;
+                    }
+                    
+                    cv::circle(flippedframe, cv::Point((int)pose.keypoints[i].x, (int)pose.keypoints[i].y), 8, cv::Scalar(100, 155, 50), -1); 
+                }
+            }
+
             int idx = 0;
             for (const auto& kp : pose.keypoints)
             {
@@ -188,6 +232,48 @@ int main()
 
         if (havePose)
         {
+            //=====PASS THRU CONF GATE=====
+
+            // make sure lastGoodPose has correct size
+            if (!haveLastGoodPose || lastGoodPose.keypoints.size() != pose.keypoints.size()) {
+                lastGoodPose = pose;// copy everything!
+                haveLastGoodPose = true;
+            }
+
+            // per-keypoint conf gate
+            static std::vector<int> invalidCounts;  // persists across frames
+            if (invalidCounts.size() != pose.keypoints.size())
+                invalidCounts.assign(pose.keypoints.size(), 0); // shld run once upo ninitialisation
+            for (size_t i = 0; i < pose.keypoints.size(); ++i) {
+                float conf = pose.keypoints[i].confidence;
+                bool reliable = (conf >= AppConfigKeypoints::CONF_THRESHOLD);
+
+                if (reliable)
+                {
+                    // Keep current keypoint as-is; update lastGood
+                    lastGoodPose.keypoints[i].x = pose.keypoints[i].x;
+                    lastGoodPose.keypoints[i].y = pose.keypoints[i].y;
+                    lastGoodPose.keypoints[i].confidence = conf;
+                    invalidCounts[i] = 0;
+                }
+                else { // UNRELIABLE!!! replace w last good
+                    invalidCounts[i]++;
+                    if (invalidCounts[i] > AppConfigKeypoints::INVALID_FRAMES_MAX) {
+                        // bad too long: dont assign lastGoodPose to currr keypoints
+                        pose.keypoints[i].confidence = 0.0f; // mark as low-conf explicitly
+                    }
+                    else
+                    {
+                        // still below invalid_frame_max, use last good keypoints
+                        pose.keypoints[i].x = lastGoodPose.keypoints[i].x;
+                        pose.keypoints[i].y = lastGoodPose.keypoints[i].y;
+                    }
+
+                    if(pose.keypoints[i].confidence > 0.5f)
+                    cv::circle(flippedframe, cv::Point((int)pose.keypoints[i].x, (int)pose.keypoints[i].y), 8, cv::Scalar(100, 155, 50), -1);
+                }
+            }
+
             int idx = 0;
             for (const auto& kp : pose.keypoints)
             {
@@ -239,46 +325,30 @@ int main()
 
             if (posestate.ps_bodystate.leftArmUp)
             {
-                cv::putText(flippedframe,
-                    "Left Arm Up",
-                    cv::Point(30, 30),
-                    cv::FONT_HERSHEY_SIMPLEX,
-                    1,
-                    cv::Scalar(0, 255, 255),
-                    2);
+                cv::putText(flippedframe, "Left Arm Up",
+                    cv::Point(30, 30), cv::FONT_HERSHEY_SIMPLEX,
+                    1, cv::Scalar(0, 255, 255), 2);
             }
 
             if (posestate.ps_bodystate.rightArmUp)
             {
-                cv::putText(flippedframe,
-                    "Right Arm Up",
-                    cv::Point(30, 70),
-                    cv::FONT_HERSHEY_SIMPLEX,
-                    1,
-                    cv::Scalar(0, 255, 255),
-                    2);
+                cv::putText(flippedframe, "Right Arm Up",
+                    cv::Point(30, 70), cv::FONT_HERSHEY_SIMPLEX,
+                    1, cv::Scalar(0, 255, 255), 2);
             }
 
-            if (posestate.ps_bodystate.headLeft)
+            if (posestate.ps_bodystate.crouching)
             {
-                cv::putText(flippedframe,
-                    "Head Left",
-                    cv::Point(30, 110),
-                    cv::FONT_HERSHEY_SIMPLEX,
-                    1,
-                    cv::Scalar(0, 255, 255),
-                    2);
+                cv::putText(flippedframe, "CROUCHING",
+                    cv::Point(30, 110), cv::FONT_HERSHEY_SIMPLEX,
+                    1, cv::Scalar(0, 255, 255), 2);
             }
 
             if (posestate.ps_bodystate.headRight)
             {
-                cv::putText(flippedframe,
-                    "Head Right",
-                    cv::Point(30, 150),
-                    cv::FONT_HERSHEY_SIMPLEX,
-                    1,
-                    cv::Scalar(0, 255, 255),
-                    2);
+                cv::putText(flippedframe, "Head Right",
+                    cv::Point(30, 150), cv::FONT_HERSHEY_SIMPLEX,
+                    1, cv::Scalar(0, 255, 255), 2);
             }
         }
         

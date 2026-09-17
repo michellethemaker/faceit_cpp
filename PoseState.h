@@ -36,6 +36,7 @@ struct PSCalibrateHeadState
 	float noseRightX = 0.0f;
 	float noseUpY = 0.0f;
 	float noseDownY = 0.0f;
+	float noseNeutralY = 0.0f;
 };
 
 struct PSBodyState
@@ -52,11 +53,12 @@ struct PSBodyState
 	bool toot = false;
 	bool leftLegUp = false;
 	bool rightLegUp = false;
-	bool left = false;
-	bool right = false;
+	bool leaningLeft = false;
+	bool leaningRight = false;
 	bool crouching = false;
 	bool hasLeftShoulder = false;
 	bool hasRightShoulder = false;
+	bool leftCoverMouth = false;
 
 	bool leftThumbClosed = false;
 	bool leftIndexClosed = false;

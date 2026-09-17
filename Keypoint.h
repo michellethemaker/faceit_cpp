@@ -9,6 +9,17 @@ struct Keypoint
 	float confidence;
 };
 
+struct StableKeypoint {
+    float x = 0.0f;
+    float y = 0.0f;
+    float confidence = 0.0f;
+
+    float lastGoodX = 0.0f;
+    float lastGoodY = 0.0f;
+    bool isValid = false; // trustable kp?
+    int invalidFrames = 0; //frames in a row w low conf
+};
+
 struct AllKeypoints
 {
 	std::vector<Keypoint> keypoints;
@@ -28,8 +39,8 @@ enum BodyPart
     RIGHT_EYE = 1,
     LEFT_EAR = 4,
     RIGHT_EAR = 3,
-    LEFT_EAR_SIDE = 24,
-    RIGHT_EAR_SIDE = 38,
+    LEFT_EAR_SIDE = 27,
+    RIGHT_EAR_SIDE = 35,
     MOUTH = 80,
     LEFT_MOUTH = 71,
     RIGHT_MOUTH = 77,
