@@ -32,11 +32,21 @@ struct PSCalibrateHeadState
 	float noseXcoord = 0.0f;
 	float noseYcoord = 0.0f;
 
-	float noseLeftX = 0.0f;
-	float noseRightX = 0.0f;
-	float noseUpY = 0.0f;
-	float noseDownY = 0.0f;
-	float noseNeutralY = 0.0f;
+	float noseLeftX = -0.5f; // default sample vals
+	float noseRightX = 0.15f;
+	float noseUpY = -0.04f;
+	float noseDownY = 0.04f;
+	//float noseNeutralY = 0.0f;
+	float headShoulderNeutralY = 0.3f;
+};
+
+struct PSCalibrateBodyState
+{
+	float hipWidth = 66.6875f ;
+	float shoulderElbowLength = 58.6183f;
+	float elbowWristLength = 51.5927f;
+	float hipKneeLength = 94.6668f;
+	float kneeAnkleLength = 86.0232f;
 };
 
 struct PSBodyState
@@ -78,6 +88,7 @@ struct PSBodyState
 	float rightWristLR_val = 0.0f;
 	float rightWristUD_val = 0.0f;
 
+	float currHipWidth;
 	float currAvgHips;
 	float currAvgShoulders;
 
@@ -88,6 +99,7 @@ struct PSBodyState
 	bool hasRightHand = false;
 	bool leftOverRightHand = false; //reload movement
 	bool rightOverLeftShoulder = false; // E trigger
+	bool leftOverRightShoulder = false; // F trigger
 };
 
 struct PSHandState
@@ -105,10 +117,11 @@ struct PSHandState
 struct PSPoseState
 {
 	PSHeadState ps_headstate;
-	PSCalibrateHeadState ps_calibrateheadstate;
+	//PSCalibrateHeadState ps_calibrateheadstate;
 	PSBodyState ps_bodystate;
+	//PSCalibrateBodyState ps_calibratebodystate;
 	PSHandState ps_handstate;
-
 };
 
-extern PSCalibrateHeadState g_calibHeadState; //expose calibheadstate struct so ppl can get from it. everything else has been setting vals.
+extern PSCalibrateHeadState g_calibHeadState; //expose calibheadstate struct so ppl can use/modify the struct. just include posestate.h.
+extern PSCalibrateBodyState g_calibBodyState;

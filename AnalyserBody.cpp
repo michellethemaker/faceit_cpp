@@ -1,10 +1,70 @@
 #include "AnalyserBody.h"
-#include <opencv2/opencv.hpp> // for ROI of hands
-#include <cmath>
 #include "CommonMath.h"
 #include "AppConfig.h"
+#include <opencv2/opencv.hpp> // for ROI of hands
+#include <cmath>
 #include <iostream>
 
+PSCalibrateBodyState AnalyserBody::calibrateBody(const AllKeypoints& keypoint, char c)
+{
+    //PSCalibrateHeadState calibrateheadstate;
+    CommonMath cmath;
+    //if (keypoint.keypoints.size() < 17)
+    //    return g_calibHeadState;
+
+    const auto& ls = keypoint.keypoints[LEFT_SHOULDER];
+    const auto& rs = keypoint.keypoints[RIGHT_SHOULDER];
+    const auto& le = keypoint.keypoints[LEFT_ELBOW];
+    const auto& re = keypoint.keypoints[RIGHT_ELBOW];
+    const auto& lw = keypoint.keypoints[LEFT_WRIST];
+    const auto& rw = keypoint.keypoints[RIGHT_WRIST];
+    const auto& nose = keypoint.keypoints[NOSE];
+    const auto& mouth = keypoint.keypoints[MOUTH];
+
+    const auto& lh = keypoint.keypoints[LEFT_HIP];
+    const auto& rh = keypoint.keypoints[RIGHT_HIP];
+
+    const auto& lk = keypoint.keypoints[LEFT_KNEE];
+    const auto& rk = keypoint.keypoints[RIGHT_KNEE];
+
+    const auto& la = keypoint.keypoints[LEFT_ANKLE];
+    const auto& ra = keypoint.keypoints[RIGHT_ANKLE];
+
+    float calibHipWidth = 0.0f; 
+
+    if (ls.confidence > 0.5f && rs.confidence > 0.5f)
+        calibHipWidth = cmath.EuclDist(ls,rs);
+    switch (c)
+    {
+    case 'q': //NEUTRAL POSITION
+        if (le.confidence > 0.5f && re.confidence > 0.5f &&
+            lw.confidence > 0.5f && rw.confidence > 0.5f &&
+            lh.confidence > 0.5f && rh.confidence > 0.5f &&
+            lk.confidence > 0.5f && rk.confidence > 0.5f &&
+            la.confidence > 0.5f && ra.confidence > 0.5f
+            )
+        {
+            g_calibBodyState.hipWidth = calibHipWidth;
+            g_calibBodyState.shoulderElbowLength = cmath.EuclDist(ls, le) ;
+            g_calibBodyState.elbowWristLength = cmath.EuclDist(le, lw) ;
+            g_calibBodyState.hipKneeLength = cmath.EuclDist(lh, lk) ;
+            g_calibBodyState.kneeAnkleLength = cmath.EuclDist(lk, la) ;
+            std::cout << "NEUTRAL RATIOS " << g_calibBodyState.hipWidth << "\n" << 
+                                              g_calibBodyState.shoulderElbowLength << "\n" <<
+                                              g_calibBodyState.elbowWristLength << "\n" <<
+                                              g_calibBodyState.hipKneeLength << "\n" <<
+                                              g_calibBodyState.kneeAnkleLength << "\n" <<
+                                              "^^^^^^^^^\n";
+        }
+        else
+            std::cout << "NOT ALL KEYPOINTS IN FRAME\n";
+        break;
+    case 'p':
+        std::cout << "CALIB DONE\n";
+        return g_calibBodyState;
+    };
+    return g_calibBodyState;
+}
 PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 {
     PSBodyState bodystate;
@@ -65,10 +125,14 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
 
     //TO DO: SET SHOULDER WIDTH AS NORMALISING DISTANCE FOR ALL RATIO-BASED CHECKS
     //TO DO: REORGANISE CONFIDENCE SANITY CHECKS FOR OPTIMISATION
-    //TO DO: SET cmath.EuclDist(ls,rs) as a constant for normalisation
 
-    bodystate.leftArmUp = ls.confidence > 0.5f && lw.confidence > 0.5f && lw.y < ls.y;
-    bodystate.rightArmUp = rs.confidence > 0.5f && rw.confidence > 0.5f && rw.y < rs.y;
+    if (ls.confidence > 0.5f && rs.confidence > 0.5f)
+    {
+        bodystate.currHipWidth = cmath.EuclDist(ls, rs);
+    }
+    
+    bodystate.leftArmUp = nose.confidence > 0.5f && lw.confidence > 0.5f && ls.confidence > 0.5f && lw.y < nose.y && lw.x < ls.x;
+    bodystate.rightArmUp = nose.confidence > 0.5f && rw.confidence > 0.5f && rs.confidence > 0.5f && rw.y < nose.y && rw.x > rs.x;
 
     if (ls.confidence > 0.5f && rs.confidence > 0.5f)
     {
@@ -135,7 +199,7 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
         }
         if (lw.confidence > 0.5f)
             // =====LEFT WRIST COVER MOUTH=====
-            bodystate.leftCoverMouth = mouth.confidence > 0.5f && cmath.EuclDist(mouth, lw) / cmath.EuclDist(ls, rs) < AppConfigBody::LEFTCOVERMOUTH_MAX;
+            bodystate.leftCoverMouth = mouth.confidence > 0.5f && cmath.EuclDist(mouth, lw) / bodystate.currHipWidth < AppConfigBody::LEFTCOVERMOUTH_MAX;
             // =====LEFT FINGERS CALCULATION=====
             if (lt_b.y < lw.y && lt_b.confidence > 0.5f) //UPRIGHT 
             {
@@ -203,20 +267,19 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
                 bodystate.crouching = (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la) < AppConfigBody::CROUCH_MAX) && (cmath.EuclDist(rs, rh) / cmath.EuclDist(rs, ra) < AppConfigBody::CROUCH_MAX);
                 if (bodystate.crouching)
                 {
-                    std::cout << "==========\n";
+                    std::cout << (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la)) << "==========\n";
                 }
-                std::cout << (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la)  ) << " \n";
+                //std::cout << (cmath.EuclDist(ls, lh) / cmath.EuclDist(ls, la)  ) << " \n";
+                // 
                 //===== JUMP LOGIC, USES PREV VALS =====
                 bodystate.currAvgHips = ((lh.y + rh.y) / 2) / (lh.x - rh.x);
                 bodystate.currAvgShoulders = ((ls.y + rs.y) / 2) / (ls.x - rs.x);
-                //std::cout << bodystate.currAvgHips << "\n";
+                //std::cout << bodystate.currAvgHips << "||" << bodystate.currAvgShoulders << "\n";
             }
 
             //std::cout << cmath.EuclDist(ls, la) / cmath.EuclDist(lh, la) << "|" << cmath.EuclDist(ls, la) / cmath.EuclDist(lk, la) << "\n"; 
-            
         }
     }
-
 
 //   ========== HANDS ROI LOGIC ==========
 
@@ -228,7 +291,7 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
         // ===== GRAB LSHOULDER =====
         if (ls.confidence > 0.5f && le.confidence > 0.5f && lw.confidence > 0.5f)
         {
-            //std::cout << cmath.Angle(ls,le,lw)<<"|"<< cmath.EuclDist(lw, ls) / cmath.EuclDist(ls, rs)<< "\n";
+            //std::cout << cmath.Angle(ls,le,lw)<<"|"<< cmath.EuclDist(lw, ls) / n_factor<< "\n";
             bodystate.grabLeftShoulder = cmath.Angle(ls, le, lw) < AppConfigBody::GRABLEFTSHOULDER_MAXANGLE &&
                                          cmath.EuclDist(lw, ls)/cmath.EuclDist(ls,rs)  < AppConfigBody::GRABLEFTSHOULDER_MAXDIST;
         }
@@ -236,13 +299,13 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
         // ===== RELOAD MOTION =====
         if (rw.confidence > 0.5f && ls.confidence > 0.5f && rs.confidence > 0.5f)
         {
-            if (abs(lw.x - rw.x)/cmath.EuclDist(ls,rs) < 0.4 && abs(lw.y - rw.y) / cmath.EuclDist(ls, rs) < 0.1)
+            if (abs(lw.x - rw.x)/cmath.EuclDist(ls,rs) < 0.4 && abs(lw.y - rw.y) / bodystate.currHipWidth < 0.1)
             {
                 bodystate.leftOverRightHand = true;
             }
 
             // ===== E TRIGGER =====
-            if (abs(ls.x - rw.x) / cmath.EuclDist(ls, rs) < 0.5 && abs(ls.y - rw.y) / cmath.EuclDist(ls, rs) < 0.1)
+            if (abs(ls.x - rw.x) / bodystate.currHipWidth < 0.5 && abs(ls.y - rw.y) / bodystate.currHipWidth < 0.1)
             {
                 bodystate.rightOverLeftShoulder = true;
             }
@@ -258,7 +321,13 @@ PSBodyState AnalyserBody::analyseBody(const AllKeypoints& keypoint)
         if (rs.confidence > 0.5f && re.confidence > 0.5f)
         {
             bodystate.grabRightShoulder = cmath.Angle(rs, re, rw) < AppConfigBody::GRABRIGHTSHOULDER_MAXANGLE &&
-                cmath.EuclDist(rw, rs) / cmath.EuclDist(ls, rs) < AppConfigBody::GRABRIGHTSHOULDER_MAXDIST;
+                cmath.EuclDist(rw, rs) / bodystate.currHipWidth < AppConfigBody::GRABRIGHTSHOULDER_MAXDIST;
+        }
+
+        // ===== F TRIGGER =====
+        if (abs(rs.x - lw.x) / bodystate.currHipWidth < 0.5 && abs(rs.y - lw.y) / bodystate.currHipWidth < 0.1)
+        {
+            bodystate.leftOverRightShoulder = true;
         }
     }
     return bodystate;

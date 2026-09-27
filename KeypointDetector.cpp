@@ -1,7 +1,7 @@
 #include "KeypointDetector.h"
 #include <iostream>
 #include <cstring>
-#define NDEBUG
+//#define NDEBUG
 
 // resize, pad inpt img so it matches model's expected ip size (KEEPS ASPECT RATIO SAME)
 static cv::Mat letterbox(const cv::Mat& src, cv::Size newShape, LetterboxInfo& info) 

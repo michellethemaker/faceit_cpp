@@ -3,14 +3,11 @@
 #include <iostream>
 #include "AppConfig.h"
 //#define DEBUG
-#define DEBUG_NOMOUSE
+//#define DEBUG_NOMOUSE
 
 float screenWidth = GetSystemMetrics(SM_CXSCREEN);
 float screenHeight = GetSystemMetrics(SM_CYSCREEN);
-//float prevX = 0;
-//float prevY = 0;
-//float currX = 0;
-//float currY = 0;
+
 int deadzone = 15;
 bool leftClick = false;
 bool rightClick = false;
@@ -23,7 +20,8 @@ bool leaningLeft = false;
 bool leaningRight = false;
 bool crouching = false;
 bool reloading = false;
-bool etrigger = false;
+bool triggerE = false;
+bool triggerF = false;
 bool scan = false;
 bool leftCoverMouth = false;
 float avgHips;
@@ -168,7 +166,7 @@ void InputController::update(const PSPoseState& state)
 	
 	//===================MOUSE MOVEMENT (POV CONTROL)=====================
 
-	//if (state.ps_bodystate.hasRightShoulder && state.ps_bodystate.rightPinkyClosed) // ENABLE IF MOUSE CONTROL ENABLED BY CLOSED FIST
+	if (state.ps_bodystate.hasRightShoulder && !state.ps_bodystate.rightPinkyClosed) // ENABLE IF MOUSE CONTROL ENABLED BY CLOSED FIST
 	{
 		//std::cout << state.ps_bodystate.rightWristLR_val << "||"<<state.ps_bodystate.rightWristUD_val<< "\n";
 		//MoveRelative((state.ps_bodystate.rightWristLR_val), (state.ps_bodystate.rightWristUD_val));  // LEFT/RIGHT--UP/DOWN
@@ -209,10 +207,10 @@ void InputController::update(const PSPoseState& state)
 		KeyDown(AppConfigKeybinds::KEYBIND_SCAN);
 		KeyDown(AppConfigKeybinds::KEYBIND_SCAN);
 		KeyDown(AppConfigKeybinds::KEYBIND_SCAN);
-		Sleep(100);
+		Sleep(10);
 		KeyUp(AppConfigKeybinds::KEYBIND_SCAN);
-		std::cout << "SCAN \n";
 #endif // !DEBUG
+		std::cout << "SCAN \n";
 		scan = true;
 	}
 	else if (scan == true && !state.ps_bodystate.leftArmUp)
@@ -265,14 +263,22 @@ void InputController::update(const PSPoseState& state)
 	leftPrev = state.ps_bodystate.leftLegUp; //update prev bools
 	rightPrev = state.ps_bodystate.rightLegUp;
 	
+	//if (avgHips - state.ps_bodystate.currAvgHips > 0 && avgShoulders - state.ps_bodystate.currAvgShoulders >  0)
+	//{
+	//	std::cout << avgHips - state.ps_bodystate.currAvgHips << "||" << avgShoulders - state.ps_bodystate.currAvgShoulders << "\n";
+	//}
 	
-	if (avgHips -state.ps_bodystate.currAvgHips > 0.13f && avgHips - state.ps_bodystate.currAvgHips < 0.6f &&
-		avgShoulders - state.ps_bodystate.currAvgShoulders > 0.19f) 
+	if (avgHips -state.ps_bodystate.currAvgHips > AppConfigBody::JUMPHIPS_MIN && 
+		avgHips - state.ps_bodystate.currAvgHips < AppConfigBody::JUMPHIPS_MAX &&
+		avgShoulders - state.ps_bodystate.currAvgShoulders > AppConfigBody::JUMPSHOULDER_MAX)
 	{
 		KeyDown(AppConfigKeybinds::KEYBIND_JUMP);
+		KeyDown(AppConfigKeybinds::KEYBIND_JUMP);
+		KeyDown(AppConfigKeybinds::KEYBIND_JUMP);
+		Sleep(10);
 		KeyUp(AppConfigKeybinds::KEYBIND_JUMP);
 		std::cout << "JUMP\n";
-		std::cout << avgHips - state.ps_bodystate.currAvgHips << "{}"<< avgShoulders - state.ps_bodystate.currAvgShoulders << "\n";
+		//std::cout << avgHips - state.ps_bodystate.currAvgHips << "{}"<< avgShoulders - state.ps_bodystate.currAvgShoulders << "\n";
 	}
 	avgHips = state.ps_bodystate.currAvgHips;
 	avgShoulders = state.ps_bodystate.currAvgShoulders;
@@ -284,7 +290,7 @@ void InputController::update(const PSPoseState& state)
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
-		Sleep(100);
+		Sleep(10);
 		KeyUp(AppConfigKeybinds::KEYBIND_CROUCH);
 		crouching = true;
 		std::cout << "CROUCHING\n";
@@ -294,7 +300,7 @@ void InputController::update(const PSPoseState& state)
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
 		KeyDown(AppConfigKeybinds::KEYBIND_CROUCH);
-		Sleep(100);
+		Sleep(10);
 		KeyUp(AppConfigKeybinds::KEYBIND_CROUCH);
 		std::cout << "UNCROUCHING\n";
 		crouching = false;
@@ -317,19 +323,34 @@ void InputController::update(const PSPoseState& state)
 		std::cout << "END RELOAD\n";
 	}
 	
-	if (state.ps_bodystate.rightOverLeftShoulder && etrigger == false)
+	if (state.ps_bodystate.rightOverLeftShoulder) //hold down
 	{
 		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_E);
-		KeyUp(AppConfigKeybinds::KEYBIND_ACTION_E);
-		etrigger = true;
+		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_E);
+		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_E);
+		triggerE = true;
 		std::cout << "E\n";
 	}
-	if (!state.ps_bodystate.rightOverLeftShoulder && etrigger == true)
+	if (!state.ps_bodystate.rightOverLeftShoulder && triggerE == true)
 	{
-		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_E);
 		KeyUp(AppConfigKeybinds::KEYBIND_ACTION_E);
-		etrigger = false;
+		triggerE = false;
 		std::cout << "END E\n";
+	}
+
+	if (state.ps_bodystate.leftOverRightShoulder )
+	{
+		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_F);
+		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_F);
+		KeyDown(AppConfigKeybinds::KEYBIND_ACTION_F);
+		triggerF = true;
+		std::cout << "F\n";
+	}
+	if (!state.ps_bodystate.leftOverRightShoulder && triggerF == true)
+	{
+		KeyUp(AppConfigKeybinds::KEYBIND_ACTION_F);
+		triggerF = false;
+		std::cout << "END F\n";
 	}
 
 	// =====LEFT COVER MOUTH=====
@@ -338,7 +359,7 @@ void InputController::update(const PSPoseState& state)
 		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
 		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
 		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
-		Sleep(100);
+		Sleep(10);
 		KeyUp(AppConfigKeybinds::KEYBIND_HOLDBREATH);
 		leftCoverMouth = true;
 		std::cout << "HOLD BREATH\n";
@@ -348,7 +369,7 @@ void InputController::update(const PSPoseState& state)
 		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
 		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
 		KeyDown(AppConfigKeybinds::KEYBIND_HOLDBREATH);
-		Sleep(100);
+		Sleep(10);
 		KeyUp(AppConfigKeybinds::KEYBIND_HOLDBREATH);
 		leftCoverMouth = false;
 		std::cout << "END HOLD BREATH\n";

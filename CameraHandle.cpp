@@ -1,5 +1,6 @@
 #include "CameraHandle.h"
 #include "AppConfig.h"
+#define DEBUG
 
 Camera::Camera(int index)
     : camera(index, cv::CAP_DSHOW) // initialise camera immediately w/o using a dummy variable. better. 
@@ -16,6 +17,11 @@ bool Camera::isOpened() const
 
 bool Camera::getFrame(cv::Mat& frame)
 {
+    //std::cout << camera.get(cv::CAP_PROP_FOCUS) << "\n"; //check if AF val can b used to det depth...
     camera >> frame;
+#ifndef DEBUG
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY); //grayscale image
+#endif
+    cv::GaussianBlur(frame, frame, cv::Size(5, 5), 0); // gauss blur
     return !frame.empty();
 }

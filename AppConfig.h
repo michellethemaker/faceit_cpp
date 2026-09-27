@@ -30,7 +30,7 @@ struct AppConfigKeypoints
 struct AppConfigHead
 {
 	static constexpr float SCALEFACTOR_LR = 5.0f;
-	static constexpr float SCALEFACTOR_UD = 1800.0f;
+	static constexpr float SCALEFACTOR_UD = 30.0f;
 
 	static constexpr float LEFTTILT_MIN = 1.4f;
 	static constexpr float RIGHTTILT_MIN = 1.4f;
@@ -58,5 +58,9 @@ struct AppConfigBody
 	static constexpr float RLEG_MAX = 1.9f;
 	static constexpr int WALKTIMER_MAX = 135;
 
-	static constexpr float CROUCH_MAX = 0.4f;
+	static constexpr float CROUCH_MAX = 0.35f;
+
+	static constexpr float JUMPHIPS_MIN = 0.2f;
+	static constexpr float JUMPHIPS_MAX = 0.8f;
+	static constexpr float JUMPSHOULDER_MAX = 0.2f;
 };

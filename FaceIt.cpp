@@ -128,9 +128,12 @@ int main()
                         // still below invalid_frame_max, use last good keypoints
                         pose.keypoints[i].x = lastGoodPose.keypoints[i].x;
                         pose.keypoints[i].y = lastGoodPose.keypoints[i].y;
+                        pose.keypoints[i].confidence = 0.55f; // keep conf at 0.55 to be used in analysers
+                        cv::circle(flippedframe, cv::Point((int)pose.keypoints[i].x, (int)pose.keypoints[i].y),
+                            11, cv::Scalar(100, 155, 50), -1);
                     }
+                       
                     
-                    cv::circle(flippedframe, cv::Point((int)pose.keypoints[i].x, (int)pose.keypoints[i].y), 8, cv::Scalar(100, 155, 50), -1); 
                 }
             }
 
@@ -171,14 +174,13 @@ int main()
             posestate.ps_bodystate = analyserbody.analyseBody(pose);
             posestate.ps_headstate = analyserhead.analyseHead(pose);
             
-
             f = cv::waitKey(1);
             if (f != -1)
             {
                 std::cout << f << "\n";
-                posestate.ps_calibrateheadstate = analyserhead.calibrateHead(pose, f);
+                g_calibHeadState = analyserhead.calibrateHead(pose, f);
+                g_calibBodyState = analyserbody.calibrateBody(pose, f);
             }
-         
         }
         
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -261,16 +263,29 @@ int main()
                     if (invalidCounts[i] > AppConfigKeypoints::INVALID_FRAMES_MAX) {
                         // bad too long: dont assign lastGoodPose to currr keypoints
                         pose.keypoints[i].confidence = 0.0f; // mark as low-conf explicitly
+                        if (i == 13 )//LKNEE
+                        {
+                            //std::cout << "EHHHH\n";
+                            pose.keypoints[i].x = pose.keypoints[12].x; //hip xcoord
+                            pose.keypoints[i].y = g_calibBodyState.hipKneeLength / g_calibBodyState.hipWidth *posestate.ps_bodystate.currHipWidth + lastGoodPose.keypoints[12].y  ;
+                            cv::circle(flippedframe, cv::Point((int)pose.keypoints[13].x, (int)pose.keypoints[13].y), 8, cv::Scalar(0, 155, 50), -1);
+                        }
+                        if (i == 14)//RKNEE
+                        {
+                            //std::cout << "REHHHH\n";
+                            pose.keypoints[i].x = pose.keypoints[11].x; //hip xcoord
+                            pose.keypoints[i].y = g_calibBodyState.hipKneeLength / g_calibBodyState.hipWidth * posestate.ps_bodystate.currHipWidth + lastGoodPose.keypoints[11].y;
+                            cv::circle(flippedframe, cv::Point((int)pose.keypoints[14].x, (int)pose.keypoints[14].y), 12, cv::Scalar(0, 155, 50), -1);
+                        }
                     }
                     else
                     {
                         // still below invalid_frame_max, use last good keypoints
                         pose.keypoints[i].x = lastGoodPose.keypoints[i].x;
                         pose.keypoints[i].y = lastGoodPose.keypoints[i].y;
+                        pose.keypoints[i].confidence = 0.55f;
+                        cv::circle(flippedframe, cv::Point((int)pose.keypoints[i].x, (int)pose.keypoints[i].y), 5, cv::Scalar(100, 155, 50), -1);
                     }
-
-                    if(pose.keypoints[i].confidence > 0.5f)
-                    cv::circle(flippedframe, cv::Point((int)pose.keypoints[i].x, (int)pose.keypoints[i].y), 8, cv::Scalar(100, 155, 50), -1);
                 }
             }
 

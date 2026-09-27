@@ -24,75 +24,72 @@ PSCalibrateHeadState AnalyserHead::calibrateHead(const AllKeypoints& keypoint, c
     const auto& mouth = keypoint.keypoints[MOUTH];
     const auto& chin = keypoint.keypoints[CHIN];
 
+    const auto& ls = keypoint.keypoints[LEFT_SHOULDER];
+    const auto& rs = keypoint.keypoints[RIGHT_SHOULDER];
+
+    
     float leftvsrightdist = cmath.EuclDist(lear, nose) - cmath.EuclDist(rear, nose);
     float eyedist = cmath.EuclDist(leye, reye);
     float leftvsrightdist_normalised = leftvsrightdist / eyedist;
 
 
-    float upvsdowndist = cmath.EuclDist(meye, nose)/ cmath.EuclDist(nose, chin);
-    float vertdist = cmath.EuclDist(meye, chin);
-    float pitch_normalised = (upvsdowndist / vertdist) - g_calibHeadState.noseNeutralY;
+    //float upvsdowndist = cmath.EuclDist(meye, nose)/ cmath.EuclDist(nose, chin);
+    //float vertdist = cmath.EuclDist(meye, chin);
+    //float pitch_normalised = (upvsdowndist / vertdist) - g_calibHeadState.noseNeutralY;
 
+    float shoulderAvg = (ls.y + rs.y) / 2;
+    float upvsdowndist = shoulderAvg - nose.y;
+    float pitch_normalised = (upvsdowndist / shoulderAvg) ;
     switch (c)
     {
+    case ' ': //NEUTRAL POSITION
+        //g_calibHeadState.noseNeutralY = upvsdowndist / vertdist;
+        g_calibHeadState.headShoulderNeutralY = upvsdowndist / shoulderAvg;
+        std::cout << "NEUTRAL XY " << upvsdowndist << "||" << g_calibHeadState.headShoulderNeutralY << "\n";
+        break;
+
     case 'a':
-        std::cout << "yawLeft saved "<< g_calibHeadState.noseLeftX << leftvsrightdist_normalised <<"\n";
         if (leftvsrightdist_normalised < -0.01) //keep it negative
         {
             g_calibHeadState.noseLeftX = leftvsrightdist_normalised;
+            std::cout << "yawLeft saved " << g_calibHeadState.noseLeftX << leftvsrightdist_normalised << "\n";
         }
         else
-        {
-            g_calibHeadState.noseLeftX = -0.5;
             std::cout << "nope not good "<< leftvsrightdist_normalised <<"\n";
-        }
         break;
+
     case'd':
-        std::cout << "yawRight saved " << g_calibHeadState.noseRightX << leftvsrightdist_normalised << "\n";
-        if (leftvsrightdist_normalised > 3) //keep it pos. TODO: put these constants in appconfig
+        if (leftvsrightdist_normalised > 0.1) //keep it pos. TODO: put these constants in appconfig
         {
             g_calibHeadState.noseRightX = leftvsrightdist_normalised;
+            std::cout << "yawRight saved " << g_calibHeadState.noseRightX << leftvsrightdist_normalised << "\n";
         }
         else
-            g_calibHeadState.noseRightX = 0.15;
+            std::cout << "nope not good " << leftvsrightdist_normalised << "\n";
         break;
-    case 'w':
-        std::cout << "pitchUp saved " << upvsdowndist << "||" << pitch_normalised << "\n";
 
-        if (pitch_normalised < 1 ) //keep it neg
+    case 'w':
+        //std::cout << "pitchUp saved " << upvsdowndist << "||" << pitch_normalised << "\n";
+        if (g_calibHeadState.headShoulderNeutralY -pitch_normalised <  0)
         {
-            
-            g_calibHeadState.noseUpY = pitch_normalised;
+            g_calibHeadState.noseUpY = g_calibHeadState.headShoulderNeutralY - pitch_normalised;
+            std::cout << "pitchUp saved: " << g_calibHeadState.noseUpY << "\n";
         }
         else
-        {
-            g_calibHeadState.noseUpY = 0;
-            std::cout << "nope not good " << pitch_normalised << "\n";
-        }
-
-        //std::cout << "pitchUp saved: " << g_calibHeadState.noseUpY << "/n";
-
+            std::cout << "nope not good " << g_calibHeadState.headShoulderNeutralY - pitch_normalised << "\n";
         break;
     case 's':
 
-        if (pitch_normalised > 0.001) //keep it pos
+        if (g_calibHeadState.headShoulderNeutralY - pitch_normalised > 0)
         {
-            std::cout << "pitchDown saved " << upvsdowndist << "||" << pitch_normalised << "\n";
-            g_calibHeadState.noseDownY = pitch_normalised;
+            //std::cout << "pitchDown saved " << upvsdowndist << "||" << pitch_normalised << "\n";
+            g_calibHeadState.noseDownY = g_calibHeadState.headShoulderNeutralY - pitch_normalised;
+            std::cout << "pitchDown saved: " << g_calibHeadState.noseDownY << "\n";
         }
         else
-        {
-            std::cout << "nope not good " << pitch_normalised << "\n";
-            g_calibHeadState.noseDownY = 0.001;
-        }
-        
+            std::cout << "nope not good " << g_calibHeadState.headShoulderNeutralY - pitch_normalised << "\n";
         break;
 
-    case ' ': //NEUTRAL POSITION
-            std::cout << "NEUTRAL XY " << leftvsrightdist_normalised << "||" << pitch_normalised << "\n";
-            g_calibHeadState.noseNeutralY = upvsdowndist / vertdist;
-
-        break;
     case 'p':
         std::cout << "CALIB DONE\n";
         return g_calibHeadState;
@@ -124,12 +121,10 @@ PSHeadState AnalyserHead::analyseHead(const AllKeypoints& keypoint)
     float eyedist = cmath.EuclDist(leye, reye);
     float leftvsrightdist_normalised = leftvsrightdist / eyedist;
 
-    float upvsdowndist = cmath.EuclDist(meye, nose) / cmath.EuclDist(nose, chin);
-    float vertdist = cmath.EuclDist(meye, chin);
-    float pitch_normalised = (upvsdowndist / vertdist) - g_calibHeadState.noseNeutralY;
+    float shoulderAvg = (ls.y + rs.y) / 2;
+    float upvsdowndist = shoulderAvg - nose.y;
+    float pitch_normalised = g_calibHeadState.headShoulderNeutralY - (upvsdowndist / shoulderAvg);
 
-    float scaleFactorLR = 3;
-    float scaleFactorUD = 3.8;
     //std::cout << leftvsrightdist_normalised << "||"<< upvsdowndist << "\n";
     if (leftvsrightdist_normalised < g_calibHeadState.noseLeftX)
     {
