@@ -32,10 +32,10 @@ struct PSCalibrateHeadState
 	float noseXcoord = 0.0f;
 	float noseYcoord = 0.0f;
 
-	float noseLeftX = -0.5f; // default sample vals
-	float noseRightX = 0.15f;
-	float noseUpY = -0.04f;
-	float noseDownY = 0.04f;
+	float noseLeftX = -0.3f; // default sample vals
+	float noseRightX = 0.3f;
+	float noseUpY = -0.006f;
+	float noseDownY = 0.006f;
 	//float noseNeutralY = 0.0f;
 	float headShoulderNeutralY = 0.3f;
 };
@@ -47,6 +47,7 @@ struct PSCalibrateBodyState
 	float elbowWristLength = 51.5927f;
 	float hipKneeLength = 94.6668f;
 	float kneeAnkleLength = 86.0232f;
+	float hipKneeAnkleRatio = 0.966517;
 };
 
 struct PSBodyState
@@ -70,6 +71,7 @@ struct PSBodyState
 	bool hasRightShoulder = false;
 	bool leftCoverMouth = false;
 
+	//calculated via angles
 	bool leftThumbClosed = false;
 	bool leftIndexClosed = false;
 	bool leftPinkyClosed = false;
@@ -78,6 +80,9 @@ struct PSBodyState
 	bool rightIndexClosed = false;
 	bool rightPinkyClosed = false;
 	bool rightClosed = false;
+
+	//extension calculated via change in frame in inputController
+	float leftIndex = 0.0f;
 
 	float leftWristXcoord;
 	float leftWristYcoord;
@@ -88,6 +93,7 @@ struct PSBodyState
 	float rightWristLR_val = 0.0f;
 	float rightWristUD_val = 0.0f;
 
+	float currShoulderWidth;
 	float currHipWidth;
 	float currAvgHips;
 	float currAvgShoulders;
@@ -100,6 +106,12 @@ struct PSBodyState
 	bool leftOverRightHand = false; //reload movement
 	bool rightOverLeftShoulder = false; // E trigger
 	bool leftOverRightShoulder = false; // F trigger
+	bool lElbowHang = false; //90 deg downward angle
+	bool rElbowHang = false; //90 deg downward angle
+
+	bool leftArmExtended = false;
+	bool lConstantine = false;
+	bool rConstantine = false;
 };
 
 struct PSHandState
@@ -112,6 +124,7 @@ struct PSHandState
 	bool ringDown = false;
 	bool pinkyDown = false;
 	bool closedFist = false;
+
 };
 
 struct PSPoseState
@@ -125,3 +138,4 @@ struct PSPoseState
 
 extern PSCalibrateHeadState g_calibHeadState; //expose calibheadstate struct so ppl can use/modify the struct. just include posestate.h.
 extern PSCalibrateBodyState g_calibBodyState;
+extern bool g_lArmExtended;

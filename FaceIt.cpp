@@ -267,14 +267,14 @@ int main()
                         {
                             //std::cout << "EHHHH\n";
                             pose.keypoints[i].x = pose.keypoints[12].x; //hip xcoord
-                            pose.keypoints[i].y = g_calibBodyState.hipKneeLength / g_calibBodyState.hipWidth *posestate.ps_bodystate.currHipWidth + lastGoodPose.keypoints[12].y  ;
+                            pose.keypoints[i].y = g_calibBodyState.hipKneeLength / g_calibBodyState.hipWidth *posestate.ps_bodystate.currShoulderWidth + lastGoodPose.keypoints[12].y  ;
                             cv::circle(flippedframe, cv::Point((int)pose.keypoints[13].x, (int)pose.keypoints[13].y), 8, cv::Scalar(0, 155, 50), -1);
                         }
                         if (i == 14)//RKNEE
                         {
                             //std::cout << "REHHHH\n";
                             pose.keypoints[i].x = pose.keypoints[11].x; //hip xcoord
-                            pose.keypoints[i].y = g_calibBodyState.hipKneeLength / g_calibBodyState.hipWidth * posestate.ps_bodystate.currHipWidth + lastGoodPose.keypoints[11].y;
+                            pose.keypoints[i].y = g_calibBodyState.hipKneeLength / g_calibBodyState.hipWidth * posestate.ps_bodystate.currShoulderWidth + lastGoodPose.keypoints[11].y;
                             cv::circle(flippedframe, cv::Point((int)pose.keypoints[14].x, (int)pose.keypoints[14].y), 12, cv::Scalar(0, 155, 50), -1);
                         }
                     }
@@ -329,6 +329,7 @@ int main()
             posestate.ps_headstate = analyserhead.analyseHead(pose);
             
             inputcontroller.pushState(posestate);
+            inputcontroller.updateInput(); //for keydown/keyup
             if (posestate.ps_headstate.headXcoord) // mouse control
             {
                 /*std::cout << "xcoord: " << posestate.ps_headstate.headXcoord << "\n"
