@@ -6,8 +6,11 @@ C++ pose-based project. Uses YOLOv8 and OpenCV to provide keyboard/mouse control
 Mostly created for practice. Mainly for fun.
 
 Calibrate neutral head position with SPACE.
+
 Calibrate head deadzone with WASD. 
+
 Optional calibration of neutral limb ratios with Q (make sure entire body is visible)
+
 Start actual program by HOLDING DOWN P.
 
 
